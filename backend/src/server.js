@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get('/', (req, res) => {
-    ress.send('backend jalan masbro')
+    res.send('backend jalan masbro')
 })
 
 app.get('/api/health', (req, res) => {
