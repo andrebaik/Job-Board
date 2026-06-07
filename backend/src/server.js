@@ -4,6 +4,8 @@ import dotenv from 'dotenv'
 import db from './config/db.js' 
 import authRoutes from './routes/authRoutes.js'
 import jobRoutes from './routes/jobRoutes.js'
+import applicationRoutes from './routes/applicationRoutes.js'
+import profileRoutes from './routes/profileRoutes.js'
 
 dotenv.config({quiet: true})
 
@@ -43,6 +45,8 @@ app.get('/api/db-test', async (req, res) => {
 
 app.use('/api/jobs', jobRoutes)
 app.use('/api/auth', authRoutes)
+app.use('/api/applications', applicationRoutes)
+app.use('/api/profiles', profileRoutes)
 
 const PORT = process.env.PORT || 5000;
 

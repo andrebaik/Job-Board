@@ -1,16 +1,18 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import LandingPage from './pages/LandingPage'
-import LoginPage from './pages/LoginPage'
-import RegisterPage from './pages/RegisterPage'
-import JobsPage from './pages/JobsPage'
-import JobDetailPage from './pages/JobDetailPage'
+import LandingPage from "./pages/LandingPage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import JobsPage from "./pages/JobsPage";
+import JobDetailPage from "./pages/JobDetailPage";
+import CreateJobPage from "./pages/CreateJobPage";
 
-import AdminDashboard from './pages/AdminDashboard'
-import PelamarDashboard from './pages/PelamarDashboard'
-import CompanyDashboard from './pages/CompanyDashboard'
-
-import ProtectedRoute from './routes/ProtectedRoute'
+import AdminDashboard from "./pages/AdminDashboard";
+import PelamarDashboard from "./pages/PelamarDashboard";
+import CompanyDashboard from "./pages/CompanyDashboard";
+import ApplicantDetailPage from "./pages/ApplicantDetailPage";
+import ProtectedRoute from "./routes/ProtectedRoute";
+import PelamarProfilePage from "./pages/PelamarProfilePage";
 
 function App() {
   return (
@@ -25,7 +27,7 @@ function App() {
         <Route
           path="/admin/dashboard"
           element={
-            <ProtectedRoute allowedRoles={['admin']}>
+            <ProtectedRoute allowedRoles={["admin"]}>
               <AdminDashboard />
             </ProtectedRoute>
           }
@@ -34,7 +36,7 @@ function App() {
         <Route
           path="/pelamar/dashboard"
           element={
-            <ProtectedRoute allowedRoles={['pelamar']}>
+            <ProtectedRoute allowedRoles={["pelamar"]}>
               <PelamarDashboard />
             </ProtectedRoute>
           }
@@ -43,14 +45,41 @@ function App() {
         <Route
           path="/company/dashboard"
           element={
-            <ProtectedRoute allowedRoles={['perusahaan']}>
+            <ProtectedRoute allowedRoles={["perusahaan"]}>
               <CompanyDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/company/applications/:id"
+          element={
+            <ProtectedRoute allowedRoles={["perusahaan"]}>
+              <ApplicantDetailPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/pelamar/profile"
+          element={
+            <ProtectedRoute allowedRoles={["pelamar"]}>
+              <PelamarProfilePage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/company/jobs/create"
+          element={
+            <ProtectedRoute allowedRoles={["perusahaan"]}>
+              <CreateJobPage />
             </ProtectedRoute>
           }
         />
       </Routes>
     </BrowserRouter>
-  )
+  );
 }
 
-export default App
+export default App;
