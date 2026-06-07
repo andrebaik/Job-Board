@@ -3,6 +3,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import db from './config/db.js' 
 import authRoutes from './routes/authRoutes.js'
+import jobRoutes from './routes/jobRoutes.js'
 
 dotenv.config({quiet: true})
 
@@ -40,6 +41,7 @@ app.get('/api/db-test', async (req, res) => {
   }
 })
 
+app.use('/api/jobs', jobRoutes)
 app.use('/api/auth', authRoutes)
 
 const PORT = process.env.PORT || 5000;
