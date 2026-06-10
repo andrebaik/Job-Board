@@ -36,20 +36,6 @@ router.get(
   getCompanyApplicationDetail
 )
 
-router.get(
-  '/company',
-  authMiddleware,
-  roleMiddleware('perusahaan'),
-  getCompanyApplications
-)
-
-router.get(
-  '/company/:id',
-  authMiddleware,
-  roleMiddleware('perusahaan'),
-  getCompanyApplicationDetail
-)
-
 router.post(
   '/:jobId',
   authMiddleware,
