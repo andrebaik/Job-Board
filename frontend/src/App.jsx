@@ -10,6 +10,8 @@ import CreateJobPage from "./pages/CreateJobPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import PelamarDashboard from "./pages/PelamarDashboard";
 import CompanyDashboard from "./pages/CompanyDashboard";
+import CompanyJobsPage from "./pages/CompanyJobsPage";
+import EditJobPage from "./pages/EditJobPage";
 import ApplicantDetailPage from "./pages/ApplicantDetailPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PelamarProfilePage from "./pages/PelamarProfilePage";
@@ -74,6 +76,22 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={["perusahaan"]}>
               <CreateJobPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/company/jobs"
+          element={
+            <ProtectedRoute allowedRoles={["perusahaan"]}>
+              <CompanyJobsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/company/jobs/:id/edit"
+          element={
+            <ProtectedRoute allowedRoles={["perusahaan"]}>
+              <EditJobPage />
             </ProtectedRoute>
           }
         />

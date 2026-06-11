@@ -45,7 +45,7 @@ app.get('/api/db-test', async (req, res) => {
 
 app.use('/api/jobs', jobRoutes)
 app.use('/api/auth', authRoutes)
-app.use('/api/applications', applicationRoutes)
+app.use('/api/applications', applicationRoutes)     
 app.use('/api/profiles', profileRoutes)
 
 const PORT = process.env.PORT || 5000;

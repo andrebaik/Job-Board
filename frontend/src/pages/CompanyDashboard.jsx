@@ -55,16 +55,22 @@ function CompanyDashboard() {
 
         <p className="mt-2 text-slate-600">Selamat datang, {user?.name}</p>
 
-        <div className="mt-6 flex gap-3">
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link
+            to="/company/jobs"
+            className="px-5 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
+          >
+            Kelola Lowongan
+          </Link>
           <Link
             to="/company/jobs/create"
-            className="px-5 py-2 rounded-lg bg-slate-900 text-white"
+            className="px-5 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-700"
           >
             Tambah Lowongan
           </Link>
           <button
             onClick={handleLogout}
-            className="px-5 py-2 rounded-lg bg-red-600 text-white"
+            className="px-5 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
           >
             Logout
           </button>
