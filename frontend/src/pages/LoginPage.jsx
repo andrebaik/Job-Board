@@ -1,305 +1,300 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useState, useRef, useEffect } from "react"
+import { Link, useNavigate } from "react-router-dom"
+import { useAuth } from "../context/AuthContext"
 import {
-  Mail,
-  Lock,
-  Loader2,
-  AlertCircle,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "../components/ui/Card"
+import { Input } from "../components/ui/Input"
+import { Label } from "../components/ui/Label"
+import { Button } from "../components/ui/Button"
+import { Checkbox } from "../components/ui/Checkbox"
+import { Separator } from "../components/ui/Separator"
+import {
   Eye,
   EyeOff,
-  Briefcase,
-  Search,
-  Users,
-  ShieldCheck,
-} from "lucide-react";
-import SoftAurora from "../components/SoftAurora";
+  Lock,
+  Mail,
+  ArrowRight,
+  Loader2,
+  AlertCircle,
+} from "lucide-react"
 
 function LoginPage() {
-  const navigate = useNavigate();
-  const { login } = useAuth();
+  const navigate = useNavigate()
+  const { login } = useAuth()
 
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
+  const [showPassword, setShowPassword] = useState(false)
+  const [form, setForm] = useState({ email: "", password: "" })
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const canvasRef = useRef(null)
+  useEffect(() => {
+    const canvas = canvasRef.current
+    const ctx = canvas?.getContext("2d")
+    if (!canvas || !ctx) return
+
+    const setSize = () => {
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+    }
+    setSize()
+
+    let ps = []
+    let raf = 0
+
+    const make = () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      v: Math.random() * 0.25 + 0.05,
+      o: Math.random() * 0.35 + 0.15,
+    })
+
+    const init = () => {
+      ps = []
+      const count = Math.floor((canvas.width * canvas.height) / 9000)
+      for (let i = 0; i < count; i++) ps.push(make())
+    }
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ps.forEach((p) => {
+        p.y -= p.v
+        if (p.y < 0) {
+          p.x = Math.random() * canvas.width
+          p.y = canvas.height + Math.random() * 40
+          p.v = Math.random() * 0.25 + 0.05
+          p.o = Math.random() * 0.35 + 0.15
+        }
+        ctx.fillStyle = `rgba(250,250,250,${p.o})`
+        ctx.fillRect(p.x, p.y, 0.7, 2.2)
+      })
+      raf = requestAnimationFrame(draw)
+    }
+
+    const onResize = () => {
+      setSize()
+      init()
+    }
+
+    window.addEventListener("resize", onResize)
+    init()
+    raf = requestAnimationFrame(draw)
+    return () => {
+      window.removeEventListener("resize", onResize)
+      cancelAnimationFrame(raf)
+    }
+  }, [])
 
   const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const [stats, setStats] = useState({
-    companies: 0,
-    applicants: 0,
-    filledJobs: 0,
-  });
-
-  const [statsLoading, setStatsLoading] = useState(true);
-
-  const formatNumber = (value) => {
-    return `${new Intl.NumberFormat("id-ID").format(value || 0)}+`;
-  };
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadStats = async () => {
-      try {
-        const API_BASE =
-          import.meta.env.VITE_API_BASE || "http://localhost:5000/api";
-
-        const response = await fetch(`${API_BASE}/stats/public`);
-
-        if (!response.ok) {
-          throw new Error("Gagal mengambil statistik");
-        }
-
-        const data = await response.json();
-
-        if (isMounted) {
-          setStats({
-            companies: data.companies || 0,
-            applicants: data.applicants || 0,
-            filledJobs: data.filledJobs || 0,
-          });
-        }
-      } catch (error) {
-        console.error("Gagal mengambil stats:", error);
-      } finally {
-        if (isMounted) {
-          setStatsLoading(false);
-        }
-      }
-    };
-
-    loadStats();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+    setForm({ ...form, [e.target.name]: e.target.value })
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-
+    e.preventDefault()
     try {
-      setLoading(true);
-      setError("");
-
-      const user = await login(form.email, form.password);
-
-      if (user.role === "admin") {
-        navigate("/admin/dashboard");
-      } else if (user.role === "pelamar") {
-        navigate("/pelamar/dashboard");
-      } else if (user.role === "perusahaan") {
-        navigate("/company/dashboard");
-      }
+      setLoading(true)
+      setError("")
+      const user = await login(form.email, form.password)
+      if (user.role === "admin") navigate("/admin/dashboard")
+      else if (user.role === "pelamar") navigate("/pelamar/dashboard")
+      else if (user.role === "perusahaan") navigate("/company/dashboard")
     } catch (error) {
-      setError(error.response?.data?.message || "Login gagal");
+      setError(error.response?.data?.message || "Login gagal")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
-      {/* ── Left: Brand / Hero ── */}
-      <div className="relative flex-1 flex flex-col justify-center px-8 py-12 lg:px-16 lg:py-0 overflow-hidden bg-slate-900">
-        <SoftAurora
-          speed={0.25}
-          scale={1.0}
-          brightness={0.45}
-          color1="#6366f1"
-          color2="#8b5cf6"
-          noiseFrequency={1.8}
-          noiseAmplitude={0.6}
-          bandHeight={0.35}
-          bandSpread={0.8}
-          octaveDecay={0.12}
-          layerOffset={0.4}
-          colorSpeed={0.8}
-        />
+    <section className="fixed inset-0 bg-zinc-950 text-zinc-50">
+      <style>{`
+        .accent-lines{position:absolute;inset:0;pointer-events:none;opacity:.7}
+        .hline,.vline{position:absolute;background:#27272a;will-change:transform,opacity}
+        .hline{left:0;right:0;height:1px;transform:scaleX(0);transform-origin:50% 50%;animation:drawX .8s cubic-bezier(.22,.61,.36,1) forwards}
+        .vline{top:0;bottom:0;width:1px;transform:scaleY(0);transform-origin:50% 0%;animation:drawY .9s cubic-bezier(.22,.61,.36,1) forwards}
+        .hline:nth-child(1){top:18%;animation-delay:.12s}
+        .hline:nth-child(2){top:50%;animation-delay:.22s}
+        .hline:nth-child(3){top:82%;animation-delay:.32s}
+        .vline:nth-child(4){left:22%;animation-delay:.42s}
+        .vline:nth-child(5){left:50%;animation-delay:.54s}
+        .vline:nth-child(6){left:78%;animation-delay:.66s}
+        .hline::after,.vline::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(250,250,250,.24),transparent);opacity:0;animation:shimmer .9s ease-out forwards}
+        .hline:nth-child(1)::after{animation-delay:.12s}
+        .hline:nth-child(2)::after{animation-delay:.22s}
+        .hline:nth-child(3)::after{animation-delay:.32s}
+        .vline:nth-child(4)::after{animation-delay:.42s}
+        .vline:nth-child(5)::after{animation-delay:.54s}
+        .vline:nth-child(6)::after{animation-delay:.66s}
+        @keyframes drawX{0%{transform:scaleX(0);opacity:0}60%{opacity:.95}100%{transform:scaleX(1);opacity:.7}}
+        @keyframes drawY{0%{transform:scaleY(0);opacity:0}60%{opacity:.95}100%{transform:scaleY(1);opacity:.7}}
+        @keyframes shimmer{0%{opacity:0}35%{opacity:.25}100%{opacity:0}}
 
-        <div className="relative z-10 max-w-lg">
-          {/* Logo */}
-          <div className="flex items-center gap-3 mb-10">
-            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center">
-              <Briefcase className="w-5 h-5 text-slate-900" />
-            </div>
-            <span className="text-white font-semibold text-lg tracking-tight">
-              JobBoard
-            </span>
-          </div>
+        .card-animate {
+          opacity: 0;
+          transform: translateY(20px);
+          animation: fadeUp 0.8s cubic-bezier(.22,.61,.36,1) 0.4s forwards;
+        }
+        @keyframes fadeUp {
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
 
-          {/* Headline */}
-          <h1 className="text-3xl lg:text-4xl font-bold text-white leading-tight">
-            Temukan Peluang
-            <br />
-            Karier Terbaikmu
-          </h1>
-          <p className="mt-4 text-slate-400 leading-relaxed text-base">
-            Platform lowongan kerja terpercaya yang menghubungkan talenta
-            terbaik dengan perusahaan-perusahaan terkemuka di Indonesia.
-          </p>
+      <div className="absolute inset-0 pointer-events-none [background:radial-gradient(80%_60%_at_50%_30%,rgba(255,255,255,0.06),transparent_60%)]" />
 
-          {/* Feature highlights */}
-          <div className="mt-10 space-y-4">
-            {[
-              {
-                icon: Search,
-                text: "Ratusan lowongan dari berbagai industri",
-              },
-              {
-                icon: Users,
-                text: "Profil pelamar yang terkurasi dengan baik",
-              },
-              {
-                icon: ShieldCheck,
-                text: "Proses rekrutmen yang transparan & aman",
-              },
-            ].map(({ icon: Icon, text }) => (
-              <div key={text} className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
-                  <Icon className="w-4 h-4 text-indigo-300" />
-                </div>
-                <span className="text-sm text-slate-300">{text}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Trust badges */}
-          <div className="mt-12 flex items-center gap-8">
-            {[
-              {
-                label: "Perusahaan",
-                value: statsLoading ? "..." : formatNumber(stats.companies),
-              },
-              {
-                label: "Pelamar Aktif",
-                value: statsLoading ? "..." : formatNumber(stats.applicants),
-              },
-              {
-                label: "Lowongan Terisi",
-                value: statsLoading ? "..." : formatNumber(stats.filledJobs),
-              },
-            ].map(({ label, value }) => (
-              <div key={label}>
-                <p className="text-white font-bold text-lg">{value}</p>
-                <p className="text-slate-500 text-xs mt-0.5">{label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+      <div className="accent-lines">
+        <div className="hline" />
+        <div className="hline" />
+        <div className="hline" />
+        <div className="vline" />
+        <div className="vline" />
+        <div className="vline" />
       </div>
 
-      {/* ── Right: Form ── */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12 lg:px-12 bg-white">
-        <div className="w-full max-w-sm">
-          {/* Heading */}
-          <h2 className="text-2xl font-bold text-slate-900">Masuk</h2>
-          <p className="text-slate-500 mt-1.5">
-            Selamat datang kembali, silakan masuk ke akun Anda.
-          </p>
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full opacity-50 mix-blend-screen pointer-events-none"
+      />
 
-          {/* Error */}
-          {error && (
-            <div className="mt-6 bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-xl text-sm flex items-start gap-2.5">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-500" />
-              <span>{error}</span>
-            </div>
-          )}
+      <header className="absolute left-0 right-0 top-0 flex items-center justify-between px-6 py-4 border-b border-zinc-800/80">
+        <Link to="/" className="flex items-center gap-2.5">
+          <img
+            src="/Brekerja.png"
+            alt="Work'in"
+            className="w-6 h-6 object-contain"
+          />
+          <span className="text-xs tracking-[0.14em] uppercase text-zinc-400 font-semibold">
+            Work'in
+          </span>
+        </Link>
+        <Button
+          variant="outline"
+          className="h-9 rounded-lg border-zinc-800 bg-zinc-900 text-zinc-50 hover:bg-zinc-900/80"
+          asChild
+        >
+          <Link to="/register">
+            <span className="mr-2">Daftar</span>
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </Button>
+      </header>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700">
-                Email
-              </label>
-              <div className="relative mt-1.5">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                <input
-                  type="email"
-                  name="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  placeholder="nama@email.com"
-                  autoComplete="email"
-                  className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm outline-none transition-all duration-200 bg-slate-50 placeholder:text-slate-400 hover:border-slate-300 focus:bg-white focus:border-indigo-500 focus:ring-3 focus:ring-indigo-100"
-                />
+      <div className="h-full w-full grid place-items-center px-4">
+        <Card className="card-animate w-full max-w-sm border-zinc-800 bg-zinc-900/70 backdrop-blur supports-[backdrop-filter]:bg-zinc-900/60">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl">Selamat datang</CardTitle>
+            <CardDescription className="text-zinc-400">
+              Masuk ke akun Anda
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="grid gap-5">
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg text-sm flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
+                <span>{error}</span>
               </div>
-            </div>
+            )}
 
-            {/* Password */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700">
-                Password
-              </label>
-              <div className="relative mt-1.5">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={form.password}
-                  onChange={handleChange}
-                  placeholder="Masukkan password"
-                  autoComplete="current-password"
-                  className="w-full pl-10 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm outline-none transition-all duration-200 bg-slate-50 placeholder:text-slate-400 hover:border-slate-300 focus:bg-white focus:border-indigo-500 focus:ring-3 focus:ring-indigo-100"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
-                  tabIndex={-1}
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                </button>
+            <form onSubmit={handleSubmit} className="grid gap-5">
+              <div className="grid gap-2">
+                <Label htmlFor="email" className="text-zinc-300">
+                  Email
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    placeholder="nama@email.com"
+                    autoComplete="email"
+                    className="pl-10 bg-zinc-950 border-zinc-800 text-zinc-50 placeholder:text-zinc-600"
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2.5 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 disabled:bg-slate-400 transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Memproses...
-                </>
-              ) : (
-                "Login"
-              )}
-            </button>
-          </form>
+              <div className="grid gap-2">
+                <Label htmlFor="password" className="text-zinc-300">
+                  Password
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    value={form.password}
+                    onChange={handleChange}
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                    className="pl-10 pr-10 bg-zinc-950 border-zinc-800 text-zinc-50 placeholder:text-zinc-600"
+                  />
+                  <button
+                    type="button"
+                    aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md text-zinc-400 hover:text-zinc-200 cursor-pointer"
+                    onClick={() => setShowPassword((v) => !v)}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
 
-          {/* Register link */}
-          <p className="mt-8 text-center text-sm text-slate-500">
-            Belum punya akun?{" "}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="remember"
+                    className="border-zinc-700 accent-zinc-50"
+                  />
+                  <Label htmlFor="remember" className="text-zinc-400 text-sm">
+                    Ingat saya
+                  </Label>
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full h-10 rounded-lg bg-zinc-50 text-zinc-900 hover:bg-zinc-200 cursor-pointer"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Memproses...
+                  </>
+                ) : (
+                  "Masuk"
+                )}
+              </Button>
+            </form>
+          </CardContent>
+
+          <CardFooter className="flex items-center justify-center text-sm text-zinc-400">
+            Belum punya akun?
             <Link
               to="/register"
-              className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+              className="ml-1 text-zinc-200 hover:underline"
             >
               Daftar
             </Link>
-          </p>
-        </div>
+          </CardFooter>
+        </Card>
       </div>
-    </div>
-  );
+    </section>
+  )
 }
 
-export default LoginPage;
+export default LoginPage
