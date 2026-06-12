@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
   Mail,
@@ -9,6 +9,7 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
+  ArrowLeft,
   Briefcase,
   Search,
   Users,
@@ -159,28 +160,28 @@ function AuthPage() {
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full border border-white/5" />
 
       <div className="relative z-10 max-w-lg">
-        <div className="flex items-center gap-3 mb-10">
-          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center">
-            <Briefcase className="w-5 h-5 text-slate-900" />
+          <div className="flex items-center gap-3 mb-10">
+            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center">
+              <img src="/Brekerja.png" alt="Work'in" className="w-8 h-8 object-contain" />
+            </div>
+            <span className="text-white font-semibold text-lg tracking-tight">
+              Work'in
+            </span>
           </div>
-          <span className="text-white font-semibold text-lg tracking-tight">
-            Work'in
-          </span>
-        </div>
 
-        <h1 className="text-3xl lg:text-4xl font-bold text-white leading-tight">
-          Temukan Peluang
-          <br />
-          Karier Terbaikmu
-        </h1>
-        <p className="mt-4 text-slate-400 leading-relaxed text-base">
-          Platform lowongan kerja terpercaya yang menghubungkan talenta terbaik
-          dengan perusahaan-perusahaan terkemuka di Indonesia.
-        </p>
+          <h1 className="text-3xl lg:text-4xl font-bold text-white leading-tight">
+            Temukan Peluang
+            <br />
+            Karier Terbaikmu
+          </h1>
+          <p className="mt-4 text-slate-400 leading-relaxed text-base">
+            Platform lowongan kerja terpercaya yang menghubungkan talenta terbaik
+            dengan perusahaan-perusahaan terkemuka di Indonesia.
+          </p>
 
-        <div className="mt-10 space-y-4">
-          {[
-            { icon: Search, text: "Ratusan lowongan dari berbagai industri" },
+          <div className="mt-10 space-y-4">
+            {[
+              { icon: Search, text: "Ratusan lowongan dari berbagai industri" },
             { icon: Users, text: "Profil pelamar yang terkurasi dengan baik" },
             { icon: ShieldCheck, text: "Proses rekrutmen yang transparan & aman" },
           ].map(({ icon: Icon, text }) => (
@@ -214,7 +215,7 @@ function AuthPage() {
     <>
       <div className="flex items-center gap-3 mb-6">
         <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center">
-          <Briefcase className="w-5 h-5 text-slate-900" />
+          <img src="/Brekerja.png" alt="Work'in" className="w-7 h-7 object-contain" />
         </div>
         <span className="text-white font-semibold text-base tracking-tight">
           Work'in
@@ -491,7 +492,16 @@ function AuthPage() {
           className={`absolute top-0 left-1/2 w-1/2 h-full z-20 ${panelTransition} ${whitePos}`}
         >
           <div className="h-full flex items-center justify-center px-12 bg-white">
-            <div className="w-full max-w-sm">{isLogin ? loginContent : registerContent}</div>
+            <div className="w-full max-w-sm">
+              <Link
+                to="/"
+                className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 transition-colors mb-6"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Kembali ke Beranda
+              </Link>
+              {isLogin ? loginContent : registerContent}
+            </div>
           </div>
         </div>
       </div>
@@ -517,6 +527,13 @@ function AuthPage() {
         </div>
 
         <div className="px-6 py-8">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 transition-colors mb-4"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Kembali ke Beranda
+          </Link>
           <div className="relative">
             <div className="grid grid-cols-1">
               <div className={`${mobileFormTransition} ${mobileLoginClasses}`}>
