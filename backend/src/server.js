@@ -6,6 +6,7 @@ import authRoutes from './routes/authRoutes.js'
 import jobRoutes from './routes/jobRoutes.js'
 import applicationRoutes from './routes/applicationRoutes.js'
 import profileRoutes from './routes/profileRoutes.js'
+import statsRoutes from './routes/statsRoutes.js'
 
 dotenv.config({quiet: true})
 
@@ -47,6 +48,7 @@ app.use('/api/jobs', jobRoutes)
 app.use('/api/auth', authRoutes)
 app.use('/api/applications', applicationRoutes)     
 app.use('/api/profiles', profileRoutes)
+app.use('/api/stats', statsRoutes)
 
 const PORT = process.env.PORT || 5000;
 
