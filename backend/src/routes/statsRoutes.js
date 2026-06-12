@@ -1,4 +1,3 @@
-// routes/statsRoutes.js
 import express from "express";
 import db from "../config/db.js";
 
@@ -9,7 +8,7 @@ router.get("/public", async (req, res) => {
     const [[companies]] = await db.query(`
       SELECT COUNT(*) AS total
       FROM users
-      WHERE role = 'company'
+      WHERE role = 'perusahaan'
     `);
 
     const [[applicants]] = await db.query(`
@@ -19,9 +18,9 @@ router.get("/public", async (req, res) => {
     `);
 
     const [[filledJobs]] = await db.query(`
-      SELECT COUNT(*) AS total
+      SELECT COUNT(DISTINCT job_id) AS total
       FROM applications
-      WHERE status = 'accepted'
+      WHERE status = 'diterima'
     `);
 
     res.json({
