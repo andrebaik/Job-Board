@@ -67,6 +67,6 @@ CREATE TABLE applications (
   applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE,
-  FOREIGN KEY (applicant_id) REFERENCES pelamar_profiles(id) ON DELETE CASCADE
+  FOREIGN KEY (applicant_id) REFERENCES pelamar_profiles(id) ON DELETE CASCADE,
   CONSTRAINT unique_application UNIQUE (job_id, applicant_id)
 );

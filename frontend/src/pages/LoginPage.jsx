@@ -13,6 +13,7 @@ import {
   Users,
   ShieldCheck,
 } from "lucide-react";
+import SoftAurora from "../components/SoftAurora";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -112,10 +113,20 @@ function LoginPage() {
     <div className="min-h-screen flex flex-col lg:flex-row">
       {/* ── Left: Brand / Hero ── */}
       <div className="relative flex-1 flex flex-col justify-center px-8 py-12 lg:px-16 lg:py-0 overflow-hidden bg-slate-900">
-        {/* Decorative shapes */}
-        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-indigo-500/10 blur-3xl" />
-        <div className="absolute -bottom-32 -left-16 w-80 h-80 rounded-full bg-violet-500/10 blur-3xl" />
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full border border-white/5" />
+        <SoftAurora
+          speed={0.25}
+          scale={1.0}
+          brightness={0.45}
+          color1="#6366f1"
+          color2="#8b5cf6"
+          noiseFrequency={1.8}
+          noiseAmplitude={0.6}
+          bandHeight={0.35}
+          bandSpread={0.8}
+          octaveDecay={0.12}
+          layerOffset={0.4}
+          colorSpeed={0.8}
+        />
 
         <div className="relative z-10 max-w-lg">
           {/* Logo */}
