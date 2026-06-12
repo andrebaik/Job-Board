@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
+import GlareHover from "../components/GlareHover"
 import {
   Card,
   CardHeader,
@@ -13,7 +14,6 @@ import { Input } from "../components/ui/Input"
 import { Label } from "../components/ui/Label"
 import { Button } from "../components/ui/Button"
 import { Checkbox } from "../components/ui/Checkbox"
-import { Separator } from "../components/ui/Separator"
 import {
   Eye,
   EyeOff,
@@ -29,7 +29,7 @@ import {
 
 function RegisterPage() {
   const navigate = useNavigate()
-  const { register } = useAuth()
+  const { register, login } = useAuth()
 
   const [showPassword, setShowPassword] = useState(false)
   const [form, setForm] = useState({
@@ -111,10 +111,17 @@ function RegisterPage() {
       setError("")
       setSuccess("")
       await register(form)
-      setSuccess("Register berhasil. Silakan login.")
+      const userData = await login(form.email, form.password)
+      setSuccess("Register berhasil")
       setTimeout(() => {
-        navigate("/login")
-      }, 1200)
+        if (userData.role === "perusahaan") {
+          navigate("/company/dashboard")
+        } else if (userData.role === "admin") {
+          navigate("/admin/dashboard")
+        } else {
+          navigate("/pelamar/dashboard")
+        }
+      }, 800)
     } catch (error) {
       setError(error.response?.data?.message || "Register gagal")
     } finally {
@@ -318,20 +325,31 @@ function RegisterPage() {
                 </Label>
               </div>
 
-              <Button
+              <GlareHover
+                as="button"
                 type="submit"
                 disabled={loading}
-                className="w-full h-10 rounded-lg bg-zinc-50 text-zinc-900 hover:bg-zinc-200 cursor-pointer"
+                width="100%"
+                height="40px"
+                background="rgba(255,255,255,0.1)"
+                borderRadius="8px"
+                borderColor="rgba(255,255,255,0.3)"
+                glareColor="#ffffff"
+                glareOpacity={0.4}
+                glareAngle={-30}
+                glareSize={200}
+                transitionDuration={600}
+                className="w-full h-10 rounded-lg text-white disabled:opacity-50 disabled:pointer-events-none inline-flex items-center justify-center gap-2 text-sm font-medium hover:bg-white/20"
               >
                 {loading ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                     Memproses...
                   </>
                 ) : (
                   "Daftar"
                 )}
-              </Button>
+              </GlareHover>
             </form>
           </CardContent>
 
