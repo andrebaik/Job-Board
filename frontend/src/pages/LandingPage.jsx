@@ -40,7 +40,6 @@ function LandingPage() {
           });
         }
       } catch {
-        // stats are decorative, fail silently
       } finally {
         if (mounted) setStatsLoading(false);
       }
@@ -52,7 +51,7 @@ function LandingPage() {
   }, []);
 
   return (
-    <div className="relative min-h-screen bg-[#030712] overflow-hidden">
+    <div className="relative min-h-screen bg-zinc-950 overflow-hidden">
       <style>{`
         .navbar-glass {
           border-radius: 16px;
@@ -86,19 +85,19 @@ function LandingPage() {
       {/* ─── Beams background ─── */}
       <div className="absolute inset-0 pointer-events-none">
         <Beams
-          beamWidth={1.5}
+          beamWidth={1.2}
           beamHeight={18}
-          beamNumber={14}
-          lightColor="#6366f1"
+          beamNumber={20}
+          lightColor="#ffffff"
           speed={1.5}
-          noiseIntensity={1.2}
-          scale={0.18}
-          rotation={0}
+          noiseIntensity={6.5}
+          scale={0.20}
+          rotation={30}
         />
       </div>
 
       {/* ─── Dark overlay ─── */}
-      <div className="absolute inset-0 bg-[#030712]/70 pointer-events-none" />
+      <div className="absolute inset-0 bg-zinc-950/70 pointer-events-none" />
 
       {/* ─── Content ─── */}
       <div className="relative z-10 flex flex-col min-h-screen">
@@ -108,11 +107,11 @@ function LandingPage() {
             <StarBorder
               as="div"
               className="navbar-glass w-full"
-              color="#6366f1"
+              color="rgba(255,255,255,0.3)"
               speed="4s"
-              thickness={2}
+              thickness={1}
             >
-              <nav className="w-full bg-white/5 border border-white/10 backdrop-blur-xl rounded-2xl px-5 h-14 flex items-center justify-between">
+              <nav className="w-full bg-zinc-900/70 border border-zinc-800 backdrop-blur-xl rounded-2xl px-5 h-14 flex items-center justify-between">
                 {/* Left: Logo + brand */}
                 <Link to="/" className="flex items-center gap-2.5 shrink-0">
                   <img
@@ -120,7 +119,7 @@ function LandingPage() {
                     alt="Work'in"
                     className="w-7 h-7 object-contain"
                   />
-                  <span className="text-white font-semibold text-sm tracking-tight">
+                  <span className="text-zinc-50 font-semibold text-sm tracking-tight">
                     Work'in
                   </span>
                 </Link>
@@ -129,19 +128,19 @@ function LandingPage() {
                 <div className="hidden md:flex items-center gap-8">
                   <button
                     onClick={scrollTo("fitur")}
-                    className="text-sm text-slate-400 hover:text-white transition-colors cursor-pointer"
+                    className="text-sm text-zinc-400 hover:text-zinc-50 transition-colors cursor-pointer"
                   >
                     Fitur
                   </button>
                   <button
                     onClick={scrollTo("tentang")}
-                    className="text-sm text-slate-400 hover:text-white transition-colors cursor-pointer"
+                    className="text-sm text-zinc-400 hover:text-zinc-50 transition-colors cursor-pointer"
                   >
                     Tentang
                   </button>
                   <Link
                     to="/jobs"
-                    className="text-sm text-slate-400 hover:text-white transition-colors"
+                    className="text-sm text-zinc-400 hover:text-zinc-50 transition-colors"
                   >
                     Lowongan
                   </Link>
@@ -151,13 +150,13 @@ function LandingPage() {
                 <div className="flex items-center gap-3">
                   <Link
                     to="/login"
-                    className="text-sm text-slate-400 hover:text-white transition-colors"
+                    className="text-sm text-zinc-400 hover:text-zinc-50 transition-colors"
                   >
                     Masuk
                   </Link>
                   <Link
                     to="/register"
-                    className="px-4 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-all active:scale-[0.97]"
+                    className="px-4 py-1.5 bg-zinc-50 text-zinc-950 text-sm font-medium rounded-lg hover:bg-zinc-200 transition-all active:scale-[0.97]"
                   >
                     Daftar
                   </Link>
@@ -175,15 +174,15 @@ function LandingPage() {
               <TrueFocus
                 sentence="Temukan peluang karier terbaikmu"
                 blurAmount={5}
-                borderColor="#6366f1"
-                glowColor="rgba(99, 102, 241, 0.5)"
+                borderColor="#ffffff"
+                glowColor="rgba(255,255,255,0.25)"
                 animationDuration={0.6}
                 pauseBetweenAnimations={1.5}
               />
             </div>
 
             {/* Description */}
-            <p className="mt-5 text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            <p className="mt-5 text-base sm:text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed">
               Platform lowongan kerja yang menghubungkan pelamar berbakat dengan
               perusahaan terbaik secara cepat, transparan, dan profesional.
             </p>
@@ -192,13 +191,13 @@ function LandingPage() {
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 to="/register"
-                className="w-full sm:w-auto px-8 py-3 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 transition-all active:scale-[0.97] text-center"
+                className="w-full sm:w-auto px-8 py-3 bg-zinc-50 text-zinc-950 text-sm font-medium rounded-xl hover:bg-zinc-200 transition-all active:scale-[0.97] text-center"
               >
                 Mulai Sekarang
               </Link>
               <Link
                 to="/jobs"
-                className="w-full sm:w-auto px-8 py-3 bg-white/5 text-white text-sm font-medium rounded-xl hover:bg-white/10 transition-all border border-white/10 text-center"
+                className="w-full sm:w-auto px-8 py-3 bg-zinc-900/70 text-zinc-300 text-sm font-medium rounded-xl hover:bg-zinc-800 transition-all border border-zinc-700 text-center"
               >
                 Lihat Lowongan
               </Link>
@@ -213,13 +212,13 @@ function LandingPage() {
               ].map(({ label, value }, i) => (
                 <div key={label} className="flex items-center gap-6 sm:gap-10">
                   <div>
-                    <p className="text-white font-bold text-xl sm:text-2xl">
+                    <p className="text-zinc-50 font-bold text-xl sm:text-2xl">
                       {statsLoading ? "..." : formatNumber(value)}+
                     </p>
-                    <p className="text-slate-500 text-xs mt-0.5">{label}</p>
+                    <p className="text-zinc-500 text-xs mt-0.5">{label}</p>
                   </div>
                   {i < 2 && (
-                    <div className="w-px h-10 bg-white/10 hidden sm:block" />
+                    <div className="w-px h-10 bg-zinc-800 hidden sm:block" />
                   )}
                 </div>
               ))}
@@ -231,11 +230,11 @@ function LandingPage() {
       {/* ─────── Fitur Section ─────── */}
       <section
         id="fitur"
-        className="relative z-10 px-4 py-24 border-t border-white/5"
+        className="relative z-10 px-4 py-24 border-t border-zinc-800"
       >
         <div className="max-w-[1100px] mx-auto">
-          <h2 className="text-3xl font-bold text-white text-center">Fitur</h2>
-          <p className="text-slate-400 text-center mt-2 max-w-lg mx-auto">
+          <h2 className="text-3xl font-bold text-zinc-50 text-center">Fitur</h2>
+          <p className="text-zinc-400 text-center mt-2 max-w-lg mx-auto">
             Kemudahan dalam melamar dan merekrut kandidat terbaik.
           </p>
           <div className="mt-12 grid md:grid-cols-3 gap-6">
@@ -255,10 +254,10 @@ function LandingPage() {
             ].map(({ title, desc }) => (
               <div
                 key={title}
-                className="bg-white/5 border border-white/10 rounded-2xl p-6"
+                className="bg-zinc-900/70 border border-zinc-800 rounded-2xl p-6"
               >
-                <h3 className="text-white font-semibold text-lg">{title}</h3>
-                <p className="text-slate-400 text-sm mt-2">{desc}</p>
+                <h3 className="text-zinc-50 font-semibold text-lg">{title}</h3>
+                <p className="text-zinc-400 text-sm mt-2">{desc}</p>
               </div>
             ))}
           </div>
@@ -268,11 +267,11 @@ function LandingPage() {
       {/* ─────── Tentang Section ─────── */}
       <section
         id="tentang"
-        className="relative z-10 px-4 py-24 border-t border-white/5"
+        className="relative z-10 px-4 py-24 border-t border-zinc-800"
       >
         <div className="max-w-[1100px] mx-auto text-center">
-          <h2 className="text-3xl font-bold text-white">Tentang Work'in</h2>
-          <p className="text-slate-400 mt-2 max-w-2xl mx-auto">
+          <h2 className="text-3xl font-bold text-zinc-50">Tentang Work'in</h2>
+          <p className="text-zinc-400 mt-2 max-w-2xl mx-auto">
             Work'in adalah platform pencarian kerja modern yang menghubungkan
             talenta terbaik dengan perusahaan terdepan. Kami berkomitmen untuk
             menciptakan proses rekrutmen yang cepat, transparan, dan profesional

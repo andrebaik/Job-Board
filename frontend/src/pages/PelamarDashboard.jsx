@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { api } from "../api/client";
 import { motion } from "motion/react";
+import GlareHover from "../components/GlareHover";
 import {
   LayoutDashboard,
   Search,
@@ -15,6 +16,7 @@ import {
   XCircle,
   Send,
   ArrowRight,
+  ChevronLeft,
 } from "lucide-react";
 
 const statusConfig = {
@@ -61,6 +63,66 @@ function PelamarDashboard() {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeNav, setActiveNav] = useState("dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+
+    const setSize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    setSize();
+
+    let ps = [];
+    let raf = 0;
+
+    const make = () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      v: Math.random() * 0.25 + 0.05,
+      o: Math.random() * 0.35 + 0.15,
+    });
+
+    const init = () => {
+      ps = [];
+      const count = Math.floor((canvas.width * canvas.height) / 9000);
+      for (let i = 0; i < count; i++) ps.push(make());
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ps.forEach((p) => {
+        p.y -= p.v;
+        if (p.y < 0) {
+          p.x = Math.random() * canvas.width;
+          p.y = canvas.height + Math.random() * 40;
+          p.v = Math.random() * 0.25 + 0.05;
+          p.o = Math.random() * 0.35 + 0.15;
+        }
+        ctx.fillStyle = `rgba(250,250,250,${p.o})`;
+        ctx.fillRect(p.x, p.y, 0.7, 2.2);
+      });
+      raf = requestAnimationFrame(draw);
+    };
+
+    const onResize = () => {
+      setSize();
+      init();
+    };
+
+    window.addEventListener("resize", onResize);
+    init();
+    raf = requestAnimationFrame(draw);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -91,7 +153,7 @@ function PelamarDashboard() {
   };
 
   const statCards = [
-    { label: "Total Lamaran", value: counts.total, icon: FileText, color: "text-indigo-400" },
+    { label: "Total Lamaran", value: counts.total, icon: FileText, color: "text-zinc-300" },
     { label: "Menunggu", value: counts.menunggu, icon: Clock, color: "text-amber-400" },
     { label: "Interview", value: counts.interview, icon: Send, color: "text-violet-400" },
     { label: "Diterima", value: counts.diterima, icon: CheckCircle, color: "text-emerald-400" },
@@ -107,50 +169,105 @@ function PelamarDashboard() {
           50% { transform: translate(10%, 50%); }
           75% { transform: translate(40%, 10%); }
         }
+
+        .accent-lines{position:fixed;inset:0;pointer-events:none;opacity:.7;z-index:0}
+        .hline,.vline{position:absolute;background:#27272a;will-change:transform,opacity}
+        .hline{left:0;right:0;height:1px;transform:scaleX(0);transform-origin:50% 50%;animation:drawX .8s cubic-bezier(.22,.61,.36,1) forwards}
+        .vline{top:0;bottom:0;width:1px;transform:scaleY(0);transform-origin:50% 0%;animation:drawY .9s cubic-bezier(.22,.61,.36,1) forwards}
+        .hline:nth-child(1){top:18%;animation-delay:.12s}
+        .hline:nth-child(2){top:50%;animation-delay:.22s}
+        .hline:nth-child(3){top:82%;animation-delay:.32s}
+        .vline:nth-child(4){left:22%;animation-delay:.42s}
+        .vline:nth-child(5){left:50%;animation-delay:.54s}
+        .vline:nth-child(6){left:78%;animation-delay:.66s}
+        .hline::after,.vline::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(250,250,250,.24),transparent);opacity:0;animation:shimmer .9s ease-out forwards}
+        .hline:nth-child(1)::after{animation-delay:.12s}
+        .hline:nth-child(2)::after{animation-delay:.22s}
+        .hline:nth-child(3)::after{animation-delay:.32s}
+        .vline:nth-child(4)::after{animation-delay:.42s}
+        .vline:nth-child(5)::after{animation-delay:.54s}
+        .vline:nth-child(6)::after{animation-delay:.66s}
+        @keyframes drawX{0%{transform:scaleX(0);opacity:0}60%{opacity:.95}100%{transform:scaleX(1);opacity:.7}}
+        @keyframes drawY{0%{transform:scaleY(0);opacity:0}60%{opacity:.95}100%{transform:scaleY(1);opacity:.7}}
+        @keyframes shimmer{0%{opacity:0}35%{opacity:.25}100%{opacity:0}}
       `}</style>
+
+      {/* ─────── Background ─────── */}
+      <div className="fixed inset-0 z-0 pointer-events-none [background:radial-gradient(80%_60%_at_50%_30%,rgba(255,255,255,0.06),transparent_60%)]" />
+
+      <div className="accent-lines">
+        <div className="hline" />
+        <div className="hline" />
+        <div className="hline" />
+        <div className="vline" />
+        <div className="vline" />
+        <div className="vline" />
+      </div>
+
+      <canvas
+        ref={canvasRef}
+        className="fixed inset-0 w-full h-full z-[1] opacity-50 mix-blend-screen pointer-events-none"
+      />
 
       {/* ─────── Sidebar ─────── */}
       <motion.aside
-        className="fixed left-0 top-0 h-screen w-[280px] z-30 flex flex-col border-r border-zinc-800 bg-zinc-900/70 backdrop-blur-xl overflow-hidden"
-        initial={{ x: -280 }}
-        animate={{ x: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="fixed left-0 top-0 h-screen z-30 flex flex-col border-r border-zinc-800 bg-zinc-900/70 backdrop-blur-xl overflow-hidden"
+        animate={{ width: sidebarOpen ? 280 : 72 }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
       >
         {/* Animated glow */}
         <div
-          className="absolute -top-40 -left-40 w-[400px] h-[400px] rounded-full opacity-[0.08] pointer-events-none"
+          className="absolute -top-40 -left-40 w-[400px] h-[400px] rounded-full opacity-[0.06] pointer-events-none"
           style={{
-            background: "radial-gradient(circle, #6366f1, transparent 60%)",
+            background: "radial-gradient(circle, rgba(255,255,255,0.4), transparent 60%)",
             animation: "sidebar-glow 8s ease-in-out infinite",
           }}
         />
 
         {/* Content */}
-        <div className="relative z-10 flex flex-col h-full p-6">
+        <div className="relative z-10 flex flex-col h-full p-4">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 mb-8">
-            <img
-              src="/Brekerja.png"
-              alt="Work'in"
-              className="w-7 h-7 object-contain"
-            />
-            <span className="text-zinc-50 font-semibold text-base tracking-tight">
-              Work'in
-            </span>
-          </Link>
+          {sidebarOpen ? (
+            <Link to="/" className="flex items-center gap-3 mb-8">
+              <img
+                src="/Brekerja.png"
+                alt="Work'in"
+                className="w-7 h-7 object-contain shrink-0"
+              />
+              <span className="text-zinc-50 font-semibold text-base tracking-tight whitespace-nowrap">
+                Work'in
+              </span>
+            </Link>
+          ) : (
+            <Link to="/" className="flex justify-center mb-8 mt-1">
+              <img
+                src="/Brekerja.png"
+                alt="Work'in"
+                className="w-7 h-7 object-contain"
+              />
+            </Link>
+          )}
 
           {/* User profile */}
-          <div className="bg-zinc-900/70 border border-zinc-800 rounded-2xl p-4 mb-6">
-            <div className="w-9 h-9 rounded-full bg-indigo-500/20 flex items-center justify-center">
-              <User className="w-4 h-4 text-indigo-400" />
+          {sidebarOpen ? (
+            <div className="bg-zinc-900/70 border border-zinc-800 rounded-2xl p-4 mb-6">
+              <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center">
+                <User className="w-4 h-4 text-zinc-400" />
+              </div>
+              <p className="text-zinc-50 text-sm font-medium mt-2 truncate">
+                {user?.name}
+              </p>
+              <span className="inline-block mt-1 text-[11px] font-medium text-zinc-300 bg-zinc-800 px-2 py-0.5 rounded-full">
+                Pelamar
+              </span>
             </div>
-            <p className="text-zinc-50 text-sm font-medium mt-2 truncate">
-              {user?.name}
-            </p>
-            <span className="inline-block mt-1 text-[11px] font-medium text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded-full">
-              Pelamar
-            </span>
-          </div>
+          ) : (
+            <div className="flex justify-center mb-6">
+              <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center">
+                <User className="w-4 h-4 text-zinc-400" />
+              </div>
+            </div>
+          )}
 
           {/* Navigation */}
           <nav className="flex-1 space-y-1">
@@ -158,9 +275,11 @@ function PelamarDashboard() {
               const isActive = activeNav === item.action && item.action === "dashboard";
               const classes = `flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
                 isActive
-                  ? "bg-indigo-500/15 border border-indigo-400/20 text-zinc-50"
+                  ? "bg-zinc-800 border border-zinc-700 text-zinc-50"
                   : "text-zinc-400 hover:text-zinc-50 hover:bg-zinc-800/50 hover:translate-x-[4px]"
               }`;
+
+              const icon = <item.icon className={`w-4 h-4 shrink-0 ${isActive ? "text-zinc-50" : ""}`} />;
 
               if (item.href) {
                 return (
@@ -169,9 +288,10 @@ function PelamarDashboard() {
                     to={item.href}
                     onClick={() => setActiveNav(item.action)}
                     className={classes}
+                    title={sidebarOpen ? undefined : item.label}
                   >
-                    <item.icon className={`w-4 h-4 ${isActive ? "text-indigo-400" : ""}`} />
-                    {item.label}
+                    {icon}
+                    {sidebarOpen && <span className="whitespace-nowrap">{item.label}</span>}
                   </Link>
                 );
               }
@@ -182,9 +302,10 @@ function PelamarDashboard() {
                     key={item.label}
                     onClick={scrollTo("riwayat")}
                     className={classes}
+                    title={sidebarOpen ? undefined : item.label}
                   >
-                    <item.icon className="w-4 h-4" />
-                    {item.label}
+                    {icon}
+                    {sidebarOpen && <span className="whitespace-nowrap">{item.label}</span>}
                   </button>
                 );
               }
@@ -194,12 +315,13 @@ function PelamarDashboard() {
                   key={item.label}
                   onClick={() => setActiveNav("dashboard")}
                   className={`${classes} ${isActive ? "relative" : ""}`}
+                  title={sidebarOpen ? undefined : item.label}
                 >
-                  {isActive && (
-                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-indigo-400 rounded-full shadow-[0_0_6px_#6366f1]" />
+                  {isActive && sidebarOpen && (
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-zinc-50 rounded-full shadow-[0_0_6px_rgba(255,255,255,0.3)]" />
                   )}
-                  <item.icon className={`w-4 h-4 ${isActive ? "text-indigo-400" : ""}`} />
-                  {item.label}
+                  {icon}
+                  {sidebarOpen && <span className="whitespace-nowrap">{item.label}</span>}
                 </button>
               );
             })}
@@ -209,19 +331,37 @@ function PelamarDashboard() {
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-medium text-red-400 hover:text-red-300 hover:bg-zinc-800/50 hover:translate-x-[4px] transition-all duration-200 cursor-pointer mt-4"
+            title={sidebarOpen ? undefined : "Logout"}
           >
-            <LogOut className="w-4 h-4" />
-            Logout
+            <LogOut className="w-4 h-4 shrink-0" />
+            {sidebarOpen && <span className="whitespace-nowrap">Logout</span>}
+          </button>
+
+          {/* Toggle button */}
+          <button
+            onClick={() => setSidebarOpen((v) => !v)}
+            className="flex items-center justify-center w-full mt-2 py-2 rounded-xl text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50 transition-all duration-200 cursor-pointer"
+            title={sidebarOpen ? "Ciutkan sidebar" : "Perluas sidebar"}
+          >
+            <ChevronLeft
+              className={`w-4 h-4 transition-transform duration-300 ${
+                !sidebarOpen ? "rotate-180" : ""
+              }`}
+            />
           </button>
         </div>
       </motion.aside>
 
       {/* ─────── Main Content ─────── */}
-      <div className="ml-[280px] flex-1 min-h-screen">
+      <motion.div
+        className="flex-1 min-h-screen relative z-10"
+        animate={{ marginLeft: sidebarOpen ? 280 : 72 }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+      >
         <main className="max-w-6xl mx-auto px-8 py-8">
           {/* Welcome Hero */}
           <motion.div
-            className="bg-gradient-to-r from-indigo-600/10 to-transparent border border-zinc-800 rounded-2xl p-8"
+            className="bg-gradient-to-r from-zinc-700/20 to-transparent border border-zinc-800 rounded-2xl p-8"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.15 }}
@@ -233,21 +373,48 @@ function PelamarDashboard() {
               Kelola dan pantau semua lamaran kerja Anda di sini.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
-              <Link
+              <GlareHover
+                as={Link}
                 to="/jobs"
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 transition-all active:scale-[0.97]"
+                width="auto"
+                height="40px"
+                background="rgba(255,255,255,0.1)"
+                borderRadius="12px"
+                borderColor="rgba(255,255,255,0.3)"
+                glareColor="#ffffff"
+                glareOpacity={0.4}
+                glareAngle={-30}
+                glareSize={200}
+                transitionDuration={600}
+                className="px-5 py-2.5 text-white text-sm font-medium rounded-xl hover:bg-white/20 transition-all active:scale-[0.97]"
               >
-                <Briefcase className="w-4 h-4" />
-                Cari Lowongan
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link
+                <span className="inline-flex items-center gap-2">
+                  <Briefcase className="w-4 h-4" />
+                  Cari Lowongan
+                  <ArrowRight className="w-4 h-4" />
+                </span>
+              </GlareHover>
+
+              <GlareHover
+                as={Link}
                 to="/pelamar/profile"
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-zinc-800/50 text-zinc-50 text-sm font-medium rounded-xl hover:bg-zinc-700/50 transition-all border border-zinc-800"
+                width="auto"
+                height="40px"
+                background="rgba(255,255,255,0.05)"
+                borderRadius="12px"
+                borderColor="rgba(255,255,255,0.15)"
+                glareColor="#ffffff"
+                glareOpacity={0.3}
+                glareAngle={-30}
+                glareSize={200}
+                transitionDuration={600}
+                className="px-5 py-2.5 text-zinc-300 text-sm font-medium rounded-xl hover:bg-white/10 transition-all border border-zinc-800"
               >
-                <User className="w-4 h-4" />
-                Edit Profil
-              </Link>
+                <span className="inline-flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Edit Profil
+                </span>
+              </GlareHover>
             </div>
           </motion.div>
 
@@ -294,7 +461,7 @@ function PelamarDashboard() {
                 </p>
                 <Link
                   to="/jobs"
-                  className="inline-flex items-center gap-2 mt-5 px-5 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 transition-all active:scale-[0.97]"
+                  className="inline-flex items-center gap-2 mt-5 px-5 py-2.5 bg-zinc-800 text-white text-sm font-medium rounded-xl hover:bg-zinc-700 border border-zinc-700 transition-all active:scale-[0.97]"
                 >
                   <Briefcase className="w-4 h-4" />
                   Cari Lowongan
@@ -342,7 +509,7 @@ function PelamarDashboard() {
             )}
           </section>
         </main>
-      </div>
+      </motion.div>
     </div>
   );
 }

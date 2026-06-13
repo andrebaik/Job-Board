@@ -58,7 +58,6 @@ function EditJobPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-
     try {
       setSubmitting(true)
       setError('')
@@ -78,7 +77,6 @@ function EditJobPage() {
       })
 
       setSuccess('Lowongan berhasil diperbarui.')
-
       setTimeout(() => {
         navigate('/company/jobs')
       }, 800)
@@ -93,76 +91,41 @@ function EditJobPage() {
     loadJob()
   }, [id])
 
+  const inputClass = "w-full bg-zinc-950 border border-zinc-800 text-zinc-50 placeholder:text-zinc-600 rounded-xl px-4 py-3 outline-none focus:border-zinc-600 transition-colors"
+  const selectClass = "w-full bg-zinc-950 border border-zinc-800 text-zinc-50 rounded-xl px-4 py-3 outline-none focus:border-zinc-600 transition-colors appearance-none"
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-100 p-8">
-        <div className="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-sm">
-          <p className="mt-6 text-slate-500">Memuat data lowongan...</p>
+      <div className="min-h-screen bg-zinc-950 p-8">
+        <div className="max-w-4xl mx-auto bg-zinc-900/70 border border-zinc-800 rounded-2xl p-8">
+          <p className="text-zinc-500">Memuat data lowongan...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 p-8">
-      <div className="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-sm">
-        <Link to="/company/jobs" className="text-indigo-600">
-          ← Kembali ke Daftar Lowongan
-        </Link>
+    <div className="min-h-screen bg-zinc-950 p-8">
+      <div className="max-w-4xl mx-auto bg-zinc-900/70 border border-zinc-800 rounded-2xl p-8">
+        <Link to="/company/jobs" className="text-zinc-400 hover:text-zinc-50 transition-colors text-sm">← Kembali ke Daftar Lowongan</Link>
 
-        <h1 className="mt-6 text-3xl font-bold text-slate-900">
-          Edit Lowongan
-        </h1>
-
-        <p className="mt-2 text-slate-600">
-          Perbarui data lowongan di bawah ini.
-        </p>
+        <h1 className="mt-6 text-3xl font-bold text-zinc-50">Edit Lowongan</h1>
+        <p className="mt-2 text-zinc-400">Perbarui data lowongan di bawah ini.</p>
 
         {error && (
-          <div className="mt-6 bg-red-50 text-red-600 px-4 py-3 rounded-xl">
-            {error}
-          </div>
+          <div className="mt-6 bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm">{error}</div>
         )}
 
         {success && (
-          <div className="mt-6 bg-green-50 text-green-600 px-4 py-3 rounded-xl">
-            {success}
-          </div>
+          <div className="mt-6 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-xl text-sm">{success}</div>
         )}
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-          <input
-            name="title"
-            value={form.title}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border rounded-xl"
-            placeholder="Judul lowongan"
-            required
-          />
+          <input name="title" value={form.title} onChange={handleChange} className={inputClass} placeholder="Judul lowongan" required />
+          <input name="category" value={form.category} onChange={handleChange} className={inputClass} placeholder="Kategori, contoh: IT" />
+          <input name="location" value={form.location} onChange={handleChange} className={inputClass} placeholder="Lokasi" required />
 
-          <input
-            name="category"
-            value={form.category}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border rounded-xl"
-            placeholder="Kategori, contoh: IT"
-          />
-
-          <input
-            name="location"
-            value={form.location}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border rounded-xl"
-            placeholder="Lokasi"
-            required
-          />
-
-          <select
-            name="job_type"
-            value={form.job_type}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border rounded-xl"
-          >
+          <select name="job_type" value={form.job_type} onChange={handleChange} className={selectClass}>
             <option value="Full Time">Full Time</option>
             <option value="Part Time">Part Time</option>
             <option value="Internship">Internship</option>
@@ -171,69 +134,21 @@ function EditJobPage() {
           </select>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input
-              type="number"
-              name="salary_min"
-              value={form.salary_min}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border rounded-xl"
-              placeholder="Gaji minimum"
-            />
-
-            <input
-              type="number"
-              name="salary_max"
-              value={form.salary_max}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border rounded-xl"
-              placeholder="Gaji maksimum"
-            />
+            <input type="number" name="salary_min" value={form.salary_min} onChange={handleChange} className={inputClass} placeholder="Gaji minimum" />
+            <input type="number" name="salary_max" value={form.salary_max} onChange={handleChange} className={inputClass} placeholder="Gaji maksimum" />
           </div>
 
-          <input
-            type="date"
-            name="deadline"
-            value={form.deadline}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border rounded-xl"
-            required
-          />
+          <input type="date" name="deadline" value={form.deadline} onChange={handleChange} className={inputClass} required />
 
-          <select
-            name="status"
-            value={form.status}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border rounded-xl"
-          >
+          <select name="status" value={form.status} onChange={handleChange} className={selectClass}>
             <option value="open">Dibuka</option>
             <option value="closed">Ditutup</option>
           </select>
 
-          <textarea
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            rows="5"
-            className="w-full px-4 py-3 border rounded-xl"
-            placeholder="Deskripsi pekerjaan"
-            required
-          />
+          <textarea name="description" value={form.description} onChange={handleChange} rows="5" className={inputClass} placeholder="Deskripsi pekerjaan" required />
+          <textarea name="requirements" value={form.requirements} onChange={handleChange} rows="5" className={inputClass} placeholder="Persyaratan" required />
 
-          <textarea
-            name="requirements"
-            value={form.requirements}
-            onChange={handleChange}
-            rows="5"
-            className="w-full px-4 py-3 border rounded-xl"
-            placeholder="Persyaratan"
-            required
-          />
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full py-3 rounded-xl bg-indigo-600 text-white font-medium disabled:bg-indigo-300"
-          >
+          <button type="submit" disabled={submitting} className="w-full py-3 rounded-xl bg-zinc-50 text-zinc-950 font-medium hover:bg-zinc-200 transition-all active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none">
             {submitting ? 'Menyimpan...' : 'Simpan Perubahan'}
           </button>
         </form>
