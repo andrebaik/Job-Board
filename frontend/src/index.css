@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
 @theme {
-  --font-family-sans: "Chelsea Market", cursive;
+  --font-family-sans: "DM Sans", system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-family-sans);
+  }
 }

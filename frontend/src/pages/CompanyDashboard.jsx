@@ -1,10 +1,13 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { api } from "../api/client";
 import { motion } from "motion/react";
 import GlareHover from "../components/GlareHover";
 import LogoutModal from "../components/LogoutModal";
+import PageBackground from "../components/ParticleBackground";
+
+const IMG_BASE = import.meta.env.VITE_API_BASE_URL.replace("/api", "");
 import {
   LayoutDashboard,
   Briefcase,
@@ -56,6 +59,7 @@ const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: null, action: "dashboard" },
   { label: "Kelola Lowongan", icon: Briefcase, href: "/company/jobs", action: "link" },
   { label: "Tambah Lowongan", icon: PlusCircle, href: "/company/jobs/create", action: "link" },
+  { label: "Profil Perusahaan", icon: User, href: "/company/profile", action: "link" },
   { label: "Pelamar Masuk", icon: FileText, href: null, action: "scroll" },
 ];
 
@@ -69,65 +73,8 @@ function CompanyDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeNav, setActiveNav] = useState("dashboard");
   const [logoutOpen, setLogoutOpen] = useState(false);
-
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
-
-    const setSize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    setSize();
-
-    let ps = [];
-    let raf = 0;
-
-    const make = () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      v: Math.random() * 0.25 + 0.05,
-      o: Math.random() * 0.35 + 0.15,
-    });
-
-    const init = () => {
-      ps = [];
-      const count = Math.floor((canvas.width * canvas.height) / 9000);
-      for (let i = 0; i < count; i++) ps.push(make());
-    };
-
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ps.forEach((p) => {
-        p.y -= p.v;
-        if (p.y < 0) {
-          p.x = Math.random() * canvas.width;
-          p.y = canvas.height + Math.random() * 40;
-          p.v = Math.random() * 0.25 + 0.05;
-          p.o = Math.random() * 0.35 + 0.15;
-        }
-        ctx.fillStyle = `rgba(250,250,250,${p.o})`;
-        ctx.fillRect(p.x, p.y, 0.7, 2.2);
-      });
-      raf = requestAnimationFrame(draw);
-    };
-
-    const onResize = () => {
-      setSize();
-      init();
-    };
-
-    window.addEventListener("resize", onResize);
-    init();
-    raf = requestAnimationFrame(draw);
-    return () => {
-      window.removeEventListener("resize", onResize);
-      cancelAnimationFrame(raf);
-    };
-  }, []);
+  const [companyLogo, setCompanyLogo] = useState(null);
+  const [companyName, setCompanyName] = useState("");
 
   const handleLogout = () => {
     setLogoutOpen(true);
@@ -136,6 +83,17 @@ function CompanyDashboard() {
   const confirmLogout = () => {
     logout();
     navigate("/login");
+  };
+
+  const loadProfile = async () => {
+    try {
+      const res = await api.get("/profiles/company/me");
+      const data = res.data.data;
+      if (data.logo) setCompanyLogo(IMG_BASE + data.logo);
+      if (data.company_name) setCompanyName(data.company_name);
+    } catch {
+      // silent
+    }
   };
 
   const loadApplications = async () => {
@@ -160,9 +118,8 @@ function CompanyDashboard() {
     }
   };
 
-  useEffect(() => {
-    loadApplications();
-  }, []);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { loadProfile(); loadApplications() }, [])
 
   const counts = {
     total: applications.length,
@@ -189,6 +146,8 @@ function CompanyDashboard() {
 
   return (
     <div className="min-h-screen bg-zinc-950 flex">
+      <PageBackground />
+
       <style>{`
         @keyframes sidebar-glow {
           0%, 100% { transform: translate(0%, 0%); }
@@ -196,45 +155,7 @@ function CompanyDashboard() {
           50% { transform: translate(10%, 50%); }
           75% { transform: translate(40%, 10%); }
         }
-
-        .accent-lines{position:fixed;inset:0;pointer-events:none;opacity:.7;z-index:0}
-        .hline,.vline{position:absolute;background:#27272a;will-change:transform,opacity}
-        .hline{left:0;right:0;height:1px;transform:scaleX(0);transform-origin:50% 50%;animation:drawX .8s cubic-bezier(.22,.61,.36,1) forwards}
-        .vline{top:0;bottom:0;width:1px;transform:scaleY(0);transform-origin:50% 0%;animation:drawY .9s cubic-bezier(.22,.61,.36,1) forwards}
-        .hline:nth-child(1){top:18%;animation-delay:.12s}
-        .hline:nth-child(2){top:50%;animation-delay:.22s}
-        .hline:nth-child(3){top:82%;animation-delay:.32s}
-        .vline:nth-child(4){left:22%;animation-delay:.42s}
-        .vline:nth-child(5){left:50%;animation-delay:.54s}
-        .vline:nth-child(6){left:78%;animation-delay:.66s}
-        .hline::after,.vline::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(250,250,250,.24),transparent);opacity:0;animation:shimmer .9s ease-out forwards}
-        .hline:nth-child(1)::after{animation-delay:.12s}
-        .hline:nth-child(2)::after{animation-delay:.22s}
-        .hline:nth-child(3)::after{animation-delay:.32s}
-        .vline:nth-child(4)::after{animation-delay:.42s}
-        .vline:nth-child(5)::after{animation-delay:.54s}
-        .vline:nth-child(6)::after{animation-delay:.66s}
-        @keyframes drawX{0%{transform:scaleX(0);opacity:0}60%{opacity:.95}100%{transform:scaleX(1);opacity:.7}}
-        @keyframes drawY{0%{transform:scaleY(0);opacity:0}60%{opacity:.95}100%{transform:scaleY(1);opacity:.7}}
-        @keyframes shimmer{0%{opacity:0}35%{opacity:.25}100%{opacity:0}}
       `}</style>
-
-      {/* ─────── Background ─────── */}
-      <div className="fixed inset-0 z-0 pointer-events-none [background:radial-gradient(80%_60%_at_50%_30%,rgba(255,255,255,0.06),transparent_60%)]" />
-
-      <div className="accent-lines">
-        <div className="hline" />
-        <div className="hline" />
-        <div className="hline" />
-        <div className="vline" />
-        <div className="vline" />
-        <div className="vline" />
-      </div>
-
-      <canvas
-        ref={canvasRef}
-        className="fixed inset-0 w-full h-full z-[1] opacity-50 mix-blend-screen pointer-events-none"
-      />
 
       {/* ─────── Sidebar ─────── */}
       <motion.aside
@@ -264,16 +185,24 @@ function CompanyDashboard() {
 
           {sidebarOpen ? (
             <div className="bg-zinc-900/70 border border-zinc-800 rounded-2xl p-4 mb-6">
-              <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center">
-                <User className="w-4 h-4 text-zinc-400" />
+              <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center overflow-hidden">
+                {companyLogo ? (
+                  <img src={companyLogo} alt="" className="w-full h-full object-contain p-1" />
+                ) : (
+                  <span className="text-sm font-bold text-zinc-400">{companyName?.charAt(0)?.toUpperCase() || user?.name?.charAt(0)?.toUpperCase() || "P"}</span>
+                )}
               </div>
-              <p className="text-zinc-50 text-sm font-medium mt-2 truncate">{user?.name}</p>
+              <p className="text-zinc-50 text-sm font-medium mt-2 truncate">{companyName || user?.name}</p>
               <span className="inline-block mt-1 text-[11px] font-medium text-zinc-300 bg-zinc-800 px-2 py-0.5 rounded-full">Perusahaan</span>
             </div>
           ) : (
             <div className="flex justify-center mb-6">
-              <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center">
-                <User className="w-4 h-4 text-zinc-400" />
+              <div className="w-9 h-9 rounded-xl bg-zinc-800 flex items-center justify-center overflow-hidden">
+                {companyLogo ? (
+                  <img src={companyLogo} alt="" className="w-full h-full object-contain p-1" />
+                ) : (
+                  <User className="w-4 h-4 text-zinc-400" />
+                )}
               </div>
             </div>
           )}
@@ -344,7 +273,7 @@ function CompanyDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.15 }}
           >
-            <h1 className="text-3xl font-bold text-zinc-50">Selamat datang, {user?.name}</h1>
+            <h1 className="text-3xl font-bold text-zinc-50">Selamat datang, {companyName || user?.name}</h1>
             <p className="text-zinc-400 mt-1">Kelola lamaran masuk dan lowongan perusahaan Anda.</p>
             <div className="mt-5 flex flex-wrap gap-3">
               <GlareHover

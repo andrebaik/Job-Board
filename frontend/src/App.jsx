@@ -15,6 +15,8 @@ import EditJobPage from "./pages/EditJobPage";
 import ApplicantDetailPage from "./pages/ApplicantDetailPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PelamarProfilePage from "./pages/PelamarProfilePage";
+import CompanyProfilePage from "./pages/CompanyProfilePage";
+import ChangePasswordPage from "./pages/ChangePasswordPage";
 
 function App() {
   return (
@@ -71,14 +73,32 @@ function App() {
           }
         />
 
-        <Route
-          path="/company/jobs/create"
-          element={
-            <ProtectedRoute allowedRoles={["perusahaan"]}>
-              <CreateJobPage />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/company/profile"
+            element={
+              <ProtectedRoute allowedRoles={["perusahaan"]}>
+                <CompanyProfilePage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/change-password"
+            element={
+              <ProtectedRoute allowedRoles={["pelamar", "perusahaan"]}>
+                <ChangePasswordPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/company/jobs/create"
+            element={
+              <ProtectedRoute allowedRoles={["perusahaan"]}>
+                <CreateJobPage />
+              </ProtectedRoute>
+            }
+          />
         <Route
           path="/company/jobs"
           element={

@@ -13,3 +13,17 @@ api.interceptors.request.use((config) => {
 
   return config
 })
+
+export const adminApi = {
+  getStats: () => api.get("/admin/stats"),
+  getChartData: (period = "30d") => api.get(`/admin/stats/chart?period=${period}`),
+  getUsers: (params = {}) => api.get("/admin/users", { params }),
+  updateUser: (id, data) => api.patch(`/admin/users/${id}`, data),
+  deleteUser: (id) => api.delete(`/admin/users/${id}`),
+  getJobs: (params = {}) => api.get("/admin/jobs", { params }),
+  updateJob: (id, data) => api.patch(`/admin/jobs/${id}`, data),
+  deleteJob: (id) => api.delete(`/admin/jobs/${id}`),
+  getApplications: (params = {}) => api.get("/admin/applications", { params }),
+  getCompanies: (params = {}) => api.get("/admin/companies", { params }),
+  verifyCompany: (id, verification_status) => api.patch(`/admin/companies/${id}/verify`, { verification_status }),
+};

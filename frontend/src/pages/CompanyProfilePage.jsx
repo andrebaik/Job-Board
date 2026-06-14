@@ -4,23 +4,21 @@ import { motion } from "motion/react";
 import { api } from "../api/client";
 import PageBackground from "../components/ParticleBackground";
 import UnsavedModal from "../components/UnsavedModal";
-import { ChevronLeft, User, GraduationCap, Briefcase, Loader2, Camera, Trash2 } from "lucide-react";
+import { ChevronLeft, Building2, Globe, FileText, Loader2, Camera, Trash2 } from "lucide-react";
 
 const IMG_BASE = import.meta.env.VITE_API_BASE_URL.replace("/api", "");
 
-function PelamarProfilePage() {
+function CompanyProfilePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const fromRegister = searchParams.get("fromRegister") === "true";
 
   const [form, setForm] = useState({
-    full_name: "",
-    phone: "",
+    company_name: "",
+    industry: "",
     address: "",
-    education: "",
-    skills: "",
-    experience: "",
-    cv_url: "",
+    description: "",
+    website: "",
   });
 
   const [loading, setLoading] = useState(true);
@@ -33,9 +31,10 @@ function PelamarProfilePage() {
   const [initialForm, setInitialForm] = useState(null);
   const isDirty = initialForm && JSON.stringify(form) !== JSON.stringify(initialForm);
 
-  const [profilePicture, setProfilePicture] = useState(null);
-  const [photoUploading, setPhotoUploading] = useState(false);
+  const [logo, setLogo] = useState(null);
+  const [logoUploading, setLogoUploading] = useState(false);
   const fileRef = useRef(null);
+  const [verificationStatus, setVerificationStatus] = useState("");
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -45,21 +44,20 @@ function PelamarProfilePage() {
     try {
       setLoading(true);
       setError("");
-      const response = await api.get("/profiles/pelamar/me");
+      const response = await api.get("/profiles/company/me");
       const data = response.data.data;
       const loaded = {
-        full_name: data.full_name || data.name || "",
-        phone: data.phone || "",
+        company_name: data.company_name || data.name || "",
+        industry: data.industry || "",
         address: data.address || "",
-        education: data.education || "",
-        skills: data.skills || "",
-        experience: data.experience || "",
-        cv_url: data.cv_url || "",
+        description: data.description || "",
+        website: data.website || "",
       };
       setForm(loaded);
       setInitialForm(loaded);
-      if (data.profile_picture) {
-        setProfilePicture(IMG_BASE + data.profile_picture);
+      setVerificationStatus(data.verification_status || "");
+      if (data.logo) {
+        setLogo(IMG_BASE + data.logo);
       }
     } catch (error) {
       setError(error.response?.data?.message || "Gagal mengambil profil");
@@ -69,16 +67,12 @@ function PelamarProfilePage() {
   };
 
   const saveProfile = async () => {
-    await api.put("/profiles/pelamar/me", form);
+    await api.put("/profiles/company/me", form);
     setInitialForm({ ...form });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.phone.trim()) {
-      setError("Nomor HP wajib diisi");
-      return;
-    }
     try {
       setSaving(true);
       setError("");
@@ -86,7 +80,7 @@ function PelamarProfilePage() {
       await saveProfile();
       setSuccess("Profil berhasil disimpan.");
       if (fromRegister) {
-        setTimeout(() => navigate("/pelamar/dashboard"), 600);
+        setTimeout(() => navigate("/company/dashboard"), 600);
       }
     } catch (error) {
       setError(error.response?.data?.message || "Gagal menyimpan profil");
@@ -105,12 +99,6 @@ function PelamarProfilePage() {
   };
 
   const handleSaveAndExit = async () => {
-    if (!form.phone.trim()) {
-      setError("Nomor HP wajib diisi");
-      setShowExitModal(false);
-      setPendingNav(null);
-      return;
-    }
     try {
       setSaving(true);
       await saveProfile();
@@ -137,8 +125,8 @@ function PelamarProfilePage() {
   const handleSkip = async () => {
     try {
       setSaving(true);
-      await api.post("/profiles/pelamar/me/skip");
-      navigate("/pelamar/dashboard");
+      await api.post("/profiles/company/me/skip");
+      navigate("/company/dashboard");
     } catch (error) {
       setError(error.response?.data?.message || "Gagal");
     } finally {
@@ -146,7 +134,7 @@ function PelamarProfilePage() {
     }
   };
 
-  const handlePhotoSelect = (e) => {
+  const handleLogoSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -164,42 +152,42 @@ function PelamarProfilePage() {
     setSuccess("");
 
     const preview = URL.createObjectURL(file);
-    setProfilePicture(preview);
+    setLogo(preview);
 
-    uploadPhoto(file);
+    uploadLogo(file);
   };
 
-  const uploadPhoto = async (file) => {
+  const uploadLogo = async (file) => {
     try {
-      setPhotoUploading(true);
+      setLogoUploading(true);
       const fd = new FormData();
-      fd.append("photo", file);
-      const res = await api.put("/profiles/pelamar/me/photo", fd, {
+      fd.append("logo", file);
+      const res = await api.put("/profiles/company/me/logo", fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      setProfilePicture(IMG_BASE + res.data.data.profile_picture);
-      setSuccess("Foto profil berhasil diperbarui.");
+      setLogo(IMG_BASE + res.data.data.logo);
+      setSuccess("Logo berhasil diperbarui.");
     } catch (error) {
-      const msg = error.response?.data?.message || "Gagal mengupload foto";
+      const msg = error.response?.data?.message || "Gagal mengupload logo";
       setError(msg);
       loadProfile();
     } finally {
-      setPhotoUploading(false);
+      setLogoUploading(false);
     }
   };
 
-  const handleDeletePhoto = async () => {
+  const handleDeleteLogo = async () => {
     try {
-      setPhotoUploading(true);
+      setLogoUploading(true);
       setError("");
       setSuccess("");
-      await api.delete("/profiles/pelamar/me/photo");
-      setProfilePicture(null);
-      setSuccess("Foto profil berhasil dihapus.");
+      await api.delete("/profiles/company/me/logo");
+      setLogo(null);
+      setSuccess("Logo berhasil dihapus.");
     } catch (error) {
-      setError(error.response?.data?.message || "Gagal menghapus foto");
+      setError(error.response?.data?.message || "Gagal menghapus logo");
     } finally {
-      setPhotoUploading(false);
+      setLogoUploading(false);
     }
   };
 
@@ -229,10 +217,10 @@ function PelamarProfilePage() {
           transition={{ duration: 0.4 }}
         >
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold text-zinc-50">Edit Profil</h1>
+            <h1 className="text-2xl font-bold text-zinc-50">Profil Perusahaan</h1>
             <button
               type="button"
-              onClick={() => handleExit("/pelamar/dashboard")}
+              onClick={() => handleExit("/company/dashboard")}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-zinc-50 border border-zinc-700 transition-all active:scale-[0.97]"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
@@ -274,7 +262,7 @@ function PelamarProfilePage() {
                     <Camera className="w-4 h-4 text-zinc-300" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-semibold text-zinc-50">Foto Profil</h2>
+                    <h2 className="text-sm font-semibold text-zinc-50">Logo Perusahaan</h2>
                     <p className="text-[11px] text-zinc-500">JPG, PNG, atau WebP. Maksimal 2MB.</p>
                   </div>
                 </div>
@@ -284,13 +272,13 @@ function PelamarProfilePage() {
                       onClick={() => fileRef.current?.click()}
                       className="w-20 h-20 rounded-2xl bg-zinc-800 border-2 border-dashed border-zinc-700 flex items-center justify-center overflow-hidden cursor-pointer hover:border-zinc-500 transition-colors"
                     >
-                      {profilePicture ? (
-                        <img src={profilePicture} alt="Foto profil" className="w-full h-full object-cover" />
+                      {logo ? (
+                        <img src={logo} alt="Logo perusahaan" className="w-full h-full object-contain p-2" />
                       ) : (
-                        <User className="w-8 h-8 text-zinc-500" />
+                        <Building2 className="w-8 h-8 text-zinc-500" />
                       )}
                     </div>
-                    {photoUploading && (
+                    {logoUploading && (
                       <div className="absolute inset-0 rounded-2xl bg-zinc-950/70 flex items-center justify-center">
                         <Loader2 className="w-5 h-5 text-zinc-400 animate-spin" />
                       </div>
@@ -303,16 +291,16 @@ function PelamarProfilePage() {
                     <button
                       type="button"
                       onClick={() => fileRef.current?.click()}
-                      disabled={photoUploading}
+                      disabled={logoUploading}
                       className="px-4 py-2 rounded-xl text-xs font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border border-zinc-700 transition-all disabled:opacity-50 cursor-pointer"
                     >
-                      {profilePicture ? "Ganti Foto" : "Upload Foto"}
+                      {logo ? "Ganti Logo" : "Upload Logo"}
                     </button>
-                    {profilePicture && (
+                    {logo && (
                       <button
                         type="button"
-                        onClick={handleDeletePhoto}
-                        disabled={photoUploading}
+                        onClick={handleDeleteLogo}
+                        disabled={logoUploading}
                         className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-medium text-red-400 hover:bg-red-500/10 border border-zinc-800 hover:border-red-500/20 transition-all disabled:opacity-50 cursor-pointer"
                       >
                         <Trash2 className="w-3 h-3" /> Hapus
@@ -324,74 +312,88 @@ function PelamarProfilePage() {
                     type="file"
                     accept=".jpg,.jpeg,.png,.webp"
                     className="hidden"
-                    onChange={handlePhotoSelect}
+                    onChange={handleLogoSelect}
                   />
                 </div>
               </div>
 
+              {verificationStatus && (
+                <div className="bg-zinc-900/70 border border-zinc-800 rounded-2xl p-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                      <FileText className="w-4 h-4 text-emerald-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-sm font-semibold text-zinc-50">Verifikasi</h2>
+                    </div>
+                  </div>
+                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                    verificationStatus === "verified"
+                      ? "bg-emerald-500/10 text-emerald-400"
+                      : verificationStatus === "rejected"
+                      ? "bg-red-500/10 text-red-400"
+                      : "bg-amber-500/10 text-amber-400"
+                  }`}>
+                    {verificationStatus === "verified" ? "Terverifikasi" : verificationStatus === "rejected" ? "Ditolak" : "Menunggu"}
+                  </span>
+                </div>
+              )}
+
               <div className="bg-zinc-900/70 border border-zinc-800 rounded-2xl p-6">
                 <div className="flex items-center gap-2 mb-5">
                   <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                    <User className="w-4 h-4 text-blue-400" />
+                    <Building2 className="w-4 h-4 text-blue-400" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-semibold text-zinc-50">Identitas</h2>
-                    <p className="text-[11px] text-zinc-500">Informasi dasar kamu</p>
+                    <h2 className="text-sm font-semibold text-zinc-50">Informasi Perusahaan</h2>
+                    <p className="text-[11px] text-zinc-500">Data dasar perusahaan</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className={labelClass}>Nama Lengkap</label>
-                    <input type="text" name="full_name" value={form.full_name} onChange={handleChange} className={inputClass} placeholder="Nama lengkap" />
+                    <label className={labelClass}>Nama Perusahaan</label>
+                    <input type="text" name="company_name" value={form.company_name} onChange={handleChange} className={inputClass} placeholder="Nama perusahaan" />
                   </div>
                   <div>
-                    <label className={labelClass}>No HP</label>
-                    <input type="text" name="phone" value={form.phone} onChange={handleChange} className={inputClass} placeholder="081234567890" />
+                    <label className={labelClass}>Industri</label>
+                    <input type="text" name="industry" value={form.industry} onChange={handleChange} className={inputClass} placeholder="Teknologi, Keuangan, dll" />
                   </div>
-                </div>
-                <div className="mt-4">
-                  <label className={labelClass}>Alamat</label>
-                  <textarea name="address" value={form.address} onChange={handleChange} rows="3" className={inputClass} placeholder="Alamat lengkap" />
                 </div>
               </div>
 
               <div className="bg-zinc-900/70 border border-zinc-800 rounded-2xl p-6">
                 <div className="flex items-center gap-2 mb-5">
                   <div className="w-8 h-8 rounded-xl bg-violet-500/10 flex items-center justify-center">
-                    <GraduationCap className="w-4 h-4 text-violet-400" />
+                    <Globe className="w-4 h-4 text-violet-400" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-semibold text-zinc-50">Pendidikan & Skills</h2>
-                    <p className="text-[11px] text-zinc-500">Latar belakang pendidikan dan keahlian</p>
+                    <h2 className="text-sm font-semibold text-zinc-50">Kontak & Lokasi</h2>
+                    <p className="text-[11px] text-zinc-500">Website dan alamat</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className={labelClass}>Pendidikan</label>
-                    <input type="text" name="education" value={form.education} onChange={handleChange} className={inputClass} placeholder="S1 Teknik Informatika" />
+                    <label className={labelClass}>Website</label>
+                    <input type="text" name="website" value={form.website} onChange={handleChange} className={inputClass} placeholder="https://example.com" />
                   </div>
                   <div>
-                    <label className={labelClass}>Link CV</label>
-                    <input type="text" name="cv_url" value={form.cv_url} onChange={handleChange} className={inputClass} placeholder="https://example.com/cv.pdf" />
+                    <label className={labelClass}>Alamat</label>
+                    <input type="text" name="address" value={form.address} onChange={handleChange} className={inputClass} placeholder="Jl. Contoh No. 123" />
                   </div>
-                </div>
-                <div className="mt-4">
-                  <label className={labelClass}>Skills</label>
-                  <textarea name="skills" value={form.skills} onChange={handleChange} rows="3" className={inputClass} placeholder="HTML, CSS, JavaScript, React" />
                 </div>
               </div>
 
               <div className="bg-zinc-900/70 border border-zinc-800 rounded-2xl p-6">
                 <div className="flex items-center gap-2 mb-5">
                   <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                    <Briefcase className="w-4 h-4 text-amber-400" />
+                    <FileText className="w-4 h-4 text-amber-400" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-semibold text-zinc-50">Pengalaman</h2>
-                    <p className="text-[11px] text-zinc-500">Project, kerja, atau organisasi</p>
+                    <h2 className="text-sm font-semibold text-zinc-50">Deskripsi</h2>
+                    <p className="text-[11px] text-zinc-500">Tentang perusahaan</p>
                   </div>
                 </div>
-                <textarea name="experience" value={form.experience} onChange={handleChange} rows="4" className={inputClass} placeholder="Ceritakan pengalaman project / kerja / organisasi..." />
+                <textarea name="description" value={form.description} onChange={handleChange} rows="5" className={inputClass} placeholder="Ceritakan tentang perusahaan Anda..." />
               </div>
 
               <div className="border-t border-zinc-800 pt-4 flex items-center justify-between">
@@ -438,4 +440,4 @@ function PelamarProfilePage() {
   );
 }
 
-export default PelamarProfilePage;
+export default CompanyProfilePage;

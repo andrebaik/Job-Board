@@ -1,131 +1,120 @@
-import { useEffect, useState, useRef } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import { motion } from "motion/react"
-import { api } from '../api/client'
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { motion } from "motion/react";
+import { api } from "../api/client";
+import PageBackground from "../components/ParticleBackground";
+import {
+  ChevronLeft,
+  Briefcase,
+  Wallet,
+  FileText,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  ToggleLeft,
+} from "lucide-react";
+
+const inputClass =
+  "w-full bg-zinc-950 border border-zinc-800 text-zinc-50 placeholder:text-zinc-600 rounded-xl px-4 py-3 text-sm outline-none focus:border-zinc-600 transition-colors";
+const labelClass = "block text-xs font-medium text-zinc-400 mb-1.5";
+
+const sectionVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: (i) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.3, delay: 0.1 * i, ease: "easeOut" },
+  }),
+};
+
+const jobTypes = ["Full Time", "Part Time", "Internship", "Remote", "Freelance"];
+
+function SectionCard({ icon: Icon, title, description, index, children }) {
+  return (
+    <motion.div
+      custom={index}
+      variants={sectionVariants}
+      initial="hidden"
+      animate="visible"
+      className="bg-zinc-900/70 border border-zinc-800 rounded-2xl p-5 md:p-6"
+    >
+      <div className="flex items-center gap-2.5 mb-5">
+        <div className="w-8 h-8 rounded-xl bg-zinc-800 flex items-center justify-center">
+          <Icon className="w-4 h-4 text-zinc-400" />
+        </div>
+        <div>
+          <h2 className="text-sm font-semibold text-zinc-50">{title}</h2>
+          {description && (
+            <p className="text-[11px] text-zinc-500">{description}</p>
+          )}
+        </div>
+      </div>
+      {children}
+    </motion.div>
+  );
+}
 
 function EditJobPage() {
-  const { id } = useParams()
-  const navigate = useNavigate()
+  const { id } = useParams();
+  const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    title: '',
-    category: '',
-    location: '',
-    job_type: 'Full Time',
-    salary_min: '',
-    salary_max: '',
-    description: '',
-    requirements: '',
-    deadline: '',
-    status: 'open',
-  })
+    title: "",
+    category: "",
+    location: "",
+    job_type: "Full Time",
+    salary_min: "",
+    salary_max: "",
+    description: "",
+    requirements: "",
+    deadline: "",
+    status: "open",
+  });
 
-  const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
-
-  const canvasRef = useRef(null)
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    const ctx = canvas?.getContext("2d")
-    if (!canvas || !ctx) return
-
-    const setSize = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
-    }
-    setSize()
-
-    let ps = []
-    let raf = 0
-
-    const make = () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      v: Math.random() * 0.25 + 0.05,
-      o: Math.random() * 0.35 + 0.15,
-    })
-
-    const init = () => {
-      ps = []
-      const count = Math.floor((canvas.width * canvas.height) / 9000)
-      for (let i = 0; i < count; i++) ps.push(make())
-    }
-
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      ps.forEach((p) => {
-        p.y -= p.v
-        if (p.y < 0) {
-          p.x = Math.random() * canvas.width
-          p.y = canvas.height + Math.random() * 40
-          p.v = Math.random() * 0.25 + 0.05
-          p.o = Math.random() * 0.35 + 0.15
-        }
-        ctx.fillStyle = `rgba(250,250,250,${p.o})`
-        ctx.fillRect(p.x, p.y, 0.7, 2.2)
-      })
-      raf = requestAnimationFrame(draw)
-    }
-
-    const onResize = () => {
-      setSize()
-      init()
-    }
-
-    window.addEventListener("resize", onResize)
-    init()
-    raf = requestAnimationFrame(draw)
-    return () => {
-      window.removeEventListener("resize", onResize)
-      cancelAnimationFrame(raf)
-    }
-  }, [])
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const loadJob = async () => {
     try {
-      setLoading(true)
-      const response = await api.get(`/jobs/${id}`)
-      const job = response.data.data
+      setLoading(true);
+      const response = await api.get(`/jobs/${id}`);
+      const job = response.data.data;
 
       setForm({
-        title: job.title || '',
-        category: job.category || '',
-        location: job.location || '',
-        job_type: job.job_type || 'Full Time',
-        salary_min: job.salary_min || '',
-        salary_max: job.salary_max || '',
-        description: job.description || '',
-        requirements: job.requirements || '',
-        deadline: job.deadline ? job.deadline.split('T')[0] : '',
-        status: job.status || 'open',
-      })
+        title: job.title || "",
+        category: job.category || "",
+        location: job.location || "",
+        job_type: job.job_type || "Full Time",
+        salary_min: job.salary_min || "",
+        salary_max: job.salary_max || "",
+        description: job.description || "",
+        requirements: job.requirements || "",
+        deadline: job.deadline ? job.deadline.split("T")[0] : "",
+        status: job.status || "open",
+      });
     } catch (error) {
-      setError(error.response?.data?.message || 'Gagal mengambil data lowongan')
+      setError(error.response?.data?.message || "Gagal mengambil data lowongan");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    })
-  }
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
-      setSubmitting(true)
-      setError('')
-      setSuccess('')
+      setSubmitting(true);
+      setError("");
+      setSuccess("");
 
       await api.put(`/jobs/${id}`, {
         title: form.title,
-        category: form.category,
+        category: form.category || null,
         location: form.location,
         job_type: form.job_type,
         salary_min: form.salary_min || null,
@@ -134,149 +123,210 @@ function EditJobPage() {
         requirements: form.requirements,
         deadline: form.deadline,
         status: form.status,
-      })
+      });
 
-      setSuccess('Lowongan berhasil diperbarui.')
-      setTimeout(() => {
-        navigate('/company/jobs')
-      }, 800)
+      setSuccess("Lowongan berhasil diperbarui.");
+      setTimeout(() => navigate("/company/jobs"), 800);
     } catch (error) {
-      setError(error.response?.data?.message || 'Gagal memperbarui lowongan')
+      setError(error.response?.data?.message || "Gagal memperbarui lowongan");
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
-  useEffect(() => {
-    loadJob()
-  }, [id])
-
-  const inputClass = "w-full bg-zinc-950 border border-zinc-800 text-zinc-50 placeholder:text-zinc-600 rounded-xl px-4 py-3 outline-none focus:border-zinc-600 transition-colors"
-  const selectClass = "w-full bg-zinc-950 border border-zinc-800 text-zinc-50 rounded-xl px-4 py-3 outline-none focus:border-zinc-600 transition-colors appearance-none"
-
-  const bgMarkup = (
-    <>
-      <style>{`
-        .accent-lines{position:fixed;inset:0;pointer-events:none;opacity:.7;z-index:0}
-        .hline,.vline{position:absolute;background:#27272a;will-change:transform,opacity}
-        .hline{left:0;right:0;height:1px;transform:scaleX(0);transform-origin:50% 50%;animation:drawX .8s cubic-bezier(.22,.61,.36,1) forwards}
-        .vline{top:0;bottom:0;width:1px;transform:scaleY(0);transform-origin:50% 0%;animation:drawY .9s cubic-bezier(.22,.61,.36,1) forwards}
-        .hline:nth-child(1){top:18%;animation-delay:.12s}
-        .hline:nth-child(2){top:50%;animation-delay:.22s}
-        .hline:nth-child(3){top:82%;animation-delay:.32s}
-        .vline:nth-child(4){left:22%;animation-delay:.42s}
-        .vline:nth-child(5){left:50%;animation-delay:.54s}
-        .vline:nth-child(6){left:78%;animation-delay:.66s}
-        .hline::after,.vline::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(250,250,250,.24),transparent);opacity:0;animation:shimmer .9s ease-out forwards}
-        .hline:nth-child(1)::after{animation-delay:.12s}
-        .hline:nth-child(2)::after{animation-delay:.22s}
-        .hline:nth-child(3)::after{animation-delay:.32s}
-        .vline:nth-child(4)::after{animation-delay:.42s}
-        .vline:nth-child(5)::after{animation-delay:.54s}
-        .vline:nth-child(6)::after{animation-delay:.66s}
-        @keyframes drawX{0%{transform:scaleX(0);opacity:0}60%{opacity:.95}100%{transform:scaleX(1);opacity:.7}}
-        @keyframes drawY{0%{transform:scaleY(0);opacity:0}60%{opacity:.95}100%{transform:scaleY(1);opacity:.7}}
-        @keyframes shimmer{0%{opacity:0}35%{opacity:.25}100%{opacity:0}}
-      `}</style>
-      <div className="fixed inset-0 z-0 pointer-events-none [background:radial-gradient(80%_60%_at_50%_30%,rgba(255,255,255,0.06),transparent_60%)]" />
-      <div className="accent-lines">
-        <div className="hline" /><div className="hline" /><div className="hline" />
-        <div className="vline" /><div className="vline" /><div className="vline" />
-      </div>
-      <canvas ref={canvasRef} className="fixed inset-0 w-full h-full z-[1] opacity-50 mix-blend-screen pointer-events-none" />
-    </>
-  )
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { loadJob() }, [id]);
 
   if (loading) {
     return (
       <div className="min-h-screen bg-zinc-950">
-        {bgMarkup}
-        <div className="relative z-10 p-8">
-          <motion.div className="max-w-4xl mx-auto bg-zinc-900/70 border border-zinc-800 rounded-2xl p-8" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-            <p className="text-zinc-500">Memuat data lowongan...</p>
+        <PageBackground />
+        <div className="relative z-10 max-w-3xl mx-auto px-4 py-8 md:py-12">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-zinc-900/70 border border-zinc-800 rounded-2xl p-8"
+          >
+            <div className="flex items-center justify-center py-16">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-7 h-7 border-2 border-zinc-700 border-t-zinc-300 rounded-full animate-spin" />
+                <p className="text-sm text-zinc-500 font-mono">Memuat data lowongan...</p>
+              </div>
+            </div>
           </motion.div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="min-h-screen bg-zinc-950">
-      {bgMarkup}
-      <div className="relative z-10 p-8">
+      <PageBackground />
+
+      <div className="relative z-10 max-w-3xl mx-auto px-4 py-8 md:py-12">
         <motion.div
-          className="max-w-4xl mx-auto bg-zinc-900/70 border border-zinc-800 rounded-2xl p-8"
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
+          transition={{ duration: 0.3 }}
         >
-          <Link to="/company/jobs" className="text-zinc-400 hover:text-zinc-50 transition-colors text-sm">← Kembali ke Daftar Lowongan</Link>
+          <Link
+            to="/company/jobs"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-zinc-50 border border-zinc-700 transition-all active:scale-[0.97] mb-6"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+            Kelola Lowongan
+          </Link>
 
-          <motion.h1 className="mt-6 text-3xl font-bold text-zinc-50" initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>Edit Lowongan</motion.h1>
-          <motion.p className="mt-2 text-zinc-400" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.15 }}>Perbarui data lowongan di bawah ini.</motion.p>
-
-          {error && (
-            <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} className="mt-6 bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm">{error}</motion.div>
-          )}
-
-          {success && (
-            <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} className="mt-6 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-xl text-sm">{success}</motion.div>
-          )}
-
-          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
-              <input name="title" value={form.title} onChange={handleChange} className={inputClass} placeholder="Judul lowongan" required />
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.15 }}>
-              <input name="category" value={form.category} onChange={handleChange} className={inputClass} placeholder="Kategori, contoh: IT" />
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.2 }}>
-              <input name="location" value={form.location} onChange={handleChange} className={inputClass} placeholder="Lokasi" required />
+          <div className="bg-zinc-900/70 backdrop-blur-sm border border-zinc-800 rounded-2xl p-5 md:p-7">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3, delay: 0.05 }}
+            >
+              <h1 className="text-2xl font-display font-bold text-zinc-50 tracking-tight">Edit Lowongan</h1>
+              <p className="mt-1 text-sm text-zinc-500">Perbarui data lowongan di bawah ini.</p>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.25 }}>
-              <select name="job_type" value={form.job_type} onChange={handleChange} className={selectClass}>
-                <option value="Full Time">Full Time</option>
-                <option value="Part Time">Part Time</option>
-                <option value="Internship">Internship</option>
-                <option value="Remote">Remote</option>
-                <option value="Freelance">Freelance</option>
-              </select>
-            </motion.div>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="mt-5 bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm flex items-center gap-2.5"
+              >
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{error}</span>
+              </motion.div>
+            )}
 
-            <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-4" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.3 }}>
-              <input type="number" name="salary_min" value={form.salary_min} onChange={handleChange} className={inputClass} placeholder="Gaji minimum" />
-              <input type="number" name="salary_max" value={form.salary_max} onChange={handleChange} className={inputClass} placeholder="Gaji maksimum" />
-            </motion.div>
+            {success && (
+              <motion.div
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="mt-5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-xl text-sm flex items-center gap-2.5"
+              >
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>{success}</span>
+              </motion.div>
+            )}
 
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.35 }}>
-              <input type="date" name="deadline" value={form.deadline} onChange={handleChange} className={inputClass} required />
-            </motion.div>
+            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+              {/* Informasi Dasar */}
+              <SectionCard icon={Briefcase} title="Informasi Dasar" description="Judul, kategori, lokasi, dan tipe pekerjaan" index={1}>
+                <div className="space-y-4">
+                  <div>
+                    <label className={labelClass}>Judul Lowongan</label>
+                    <input name="title" value={form.title} onChange={handleChange} className={inputClass} placeholder="cth. Frontend Developer" required />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelClass}>Kategori</label>
+                      <input name="category" value={form.category} onChange={handleChange} className={inputClass} placeholder="cth. IT, Design" />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Lokasi</label>
+                      <input name="location" value={form.location} onChange={handleChange} className={inputClass} placeholder="cth. Jakarta" required />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelClass}>Tipe Pekerjaan</label>
+                      <div className="relative">
+                        <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none" />
+                        <select name="job_type" value={form.job_type} onChange={handleChange} className="w-full bg-zinc-950 border border-zinc-800 text-zinc-50 rounded-xl py-3 pl-10 pr-4 text-sm outline-none focus:border-zinc-600 transition-colors appearance-none">
+                          {jobTypes.map((t) => (
+                            <option key={t} value={t} className="bg-zinc-950">{t}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className={labelClass}>Deadline</label>
+                      <input type="date" name="deadline" value={form.deadline} onChange={handleChange} className={inputClass} required />
+                    </div>
+                  </div>
+                </div>
+              </SectionCard>
 
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.4 }}>
-              <select name="status" value={form.status} onChange={handleChange} className={selectClass}>
-                <option value="open">Dibuka</option>
-                <option value="closed">Ditutup</option>
-              </select>
-            </motion.div>
+              {/* Gaji */}
+              <SectionCard icon={Wallet} title="Gaji" description="Kisaran gaji yang ditawarkan (opsional)" index={2}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelClass}>Gaji Minimum</label>
+                    <input type="number" name="salary_min" value={form.salary_min} onChange={handleChange} className={inputClass} placeholder="cth. 5000000" />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Gaji Maksimum</label>
+                    <input type="number" name="salary_max" value={form.salary_max} onChange={handleChange} className={inputClass} placeholder="cth. 10000000" />
+                  </div>
+                </div>
+              </SectionCard>
 
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.45 }}>
-              <textarea name="description" value={form.description} onChange={handleChange} rows="5" className={inputClass} placeholder="Deskripsi pekerjaan" required />
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.5 }}>
-              <textarea name="requirements" value={form.requirements} onChange={handleChange} rows="5" className={inputClass} placeholder="Persyaratan" required />
-            </motion.div>
+              {/* Deskripsi & Persyaratan */}
+              <SectionCard icon={FileText} title="Deskripsi & Persyaratan" description="Informasi detail lowongan" index={3}>
+                <div className="space-y-4">
+                  <div>
+                    <label className={labelClass}>Deskripsi Pekerjaan</label>
+                    <textarea name="description" value={form.description} onChange={handleChange} rows="5" className={inputClass} placeholder="Jelaskan tanggung jawab dan detail pekerjaan..." required />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Persyaratan</label>
+                    <textarea name="requirements" value={form.requirements} onChange={handleChange} rows="5" className={inputClass} placeholder="Tulis persyaratan yang dibutuhkan..." required />
+                  </div>
+                </div>
+              </SectionCard>
 
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.55 }}>
-              <button type="submit" disabled={submitting} className="w-full py-3 rounded-xl bg-zinc-50 text-zinc-950 font-medium hover:bg-zinc-200 transition-all active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none">
-                {submitting ? 'Menyimpan...' : 'Simpan Perubahan'}
-              </button>
-            </motion.div>
-          </form>
+              {/* Status */}
+              <SectionCard icon={ToggleLeft} title="Status Lowongan" description="Buka atau tutup lowongan" index={4}>
+                <div className="flex items-center gap-4">
+                  {["open", "closed"].map((s) => (
+                    <label
+                      key={s}
+                      className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border text-sm font-medium cursor-pointer transition-all ${
+                        form.status === s
+                          ? s === "open"
+                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                            : "bg-red-500/10 border-red-500/30 text-red-400"
+                          : "bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:bg-zinc-800"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="status"
+                        value={s}
+                        checked={form.status === s}
+                        onChange={handleChange}
+                        className="sr-only"
+                      />
+                      <span className={`w-2 h-2 rounded-full ${s === "open" ? "bg-emerald-400" : "bg-red-400"}`} />
+                      {s === "open" ? "Dibuka" : "Ditutup"}
+                    </label>
+                  ))}
+                </div>
+              </SectionCard>
+
+              {/* Submit */}
+              <motion.div
+                custom={5}
+                variants={sectionVariants}
+                initial="hidden"
+                animate="visible"
+                className="pt-2"
+              >
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full py-3.5 rounded-xl bg-zinc-50 text-zinc-950 font-semibold text-sm hover:bg-zinc-200 transition-all active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
+                >
+                  {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {submitting ? "Menyimpan..." : "Simpan Perubahan"}
+                </button>
+              </motion.div>
+            </form>
+          </div>
         </motion.div>
       </div>
     </div>
-  )
+  );
 }
 
-export default EditJobPage
+export default EditJobPage;

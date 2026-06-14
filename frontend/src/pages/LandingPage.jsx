@@ -39,8 +39,7 @@ function LandingPage() {
             filledJobs: data.filledJobs || 0,
           });
         }
-      } catch {
-      } finally {
+      } catch { /* silent */ } finally {
         if (mounted) setStatsLoading(false);
       }
     };
