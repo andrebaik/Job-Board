@@ -167,3 +167,69 @@ export const getMe = async (req, res) => {
     })
   }
 }
+
+export const changePassword = async (req, res) => {
+  try {
+    const { current_password, new_password, confirm_password } = req.body
+
+    if (!current_password || !new_password || !confirm_password) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Password saat ini, password baru, dan konfirmasi password wajib diisi'
+      })
+    }
+
+    if (new_password.length < 6) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Password baru minimal 6 karakter'
+      })
+    }
+
+    if (new_password !== confirm_password) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Konfirmasi password tidak cocok'
+      })
+    }
+
+    const [users] = await db.query(
+      'SELECT password FROM users WHERE id = ?',
+      [req.user.id]
+    )
+
+    if (users.length === 0) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'User tidak ditemukan'
+      })
+    }
+
+    const isMatch = await bcrypt.compare(current_password, users[0].password)
+
+    if (!isMatch) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Password saat ini salah'
+      })
+    }
+
+    const hashedPassword = await bcrypt.hash(new_password, 10)
+
+    await db.query(
+      'UPDATE users SET password = ? WHERE id = ?',
+      [hashedPassword, req.user.id]
+    )
+
+    return res.json({
+      status: 'success',
+      message: 'Password berhasil diubah'
+    })
+  } catch (error) {
+    return res.status(500).json({
+      status: 'error',
+      message: 'Gagal mengubah password',
+      error: error.message
+    })
+  }
+}

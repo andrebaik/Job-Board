@@ -1,5 +1,7 @@
 import express from 'express'
 import cors from 'cors'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import dotenv from 'dotenv'
 import db from './config/db.js' 
 import authRoutes from './routes/authRoutes.js'
@@ -7,13 +9,16 @@ import jobRoutes from './routes/jobRoutes.js'
 import applicationRoutes from './routes/applicationRoutes.js'
 import profileRoutes from './routes/profileRoutes.js'
 import statsRoutes from './routes/statsRoutes.js'
+import adminRoutes from './routes/adminRoutes.js'
 
 dotenv.config({quiet: true})
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express()
 
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
 app.get('/', (req, res) => {
     res.send('backend jalan masbro')
@@ -49,6 +54,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/applications', applicationRoutes)     
 app.use('/api/profiles', profileRoutes)
 app.use('/api/stats', statsRoutes)
+app.use('/api/admin', adminRoutes)
 
 const PORT = process.env.PORT || 5000;
 

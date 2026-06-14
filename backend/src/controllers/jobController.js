@@ -15,6 +15,31 @@ const getCompanyProfileId = async (userId) => {
 
 export const getAllJobs = async (req, res) => {
   try {
+    const { q, category, location, job_type } = req.query
+    const conditions = ["jobs.status = 'open'"]
+    const params = []
+
+    if (q) {
+      conditions.push('(jobs.title LIKE ? OR company_profiles.company_name LIKE ?)')
+      params.push(`%${q}%`, `%${q}%`)
+    }
+    if (category) {
+      conditions.push('jobs.category = ?')
+      params.push(category)
+    }
+    if (location) {
+      conditions.push('jobs.location LIKE ?')
+      params.push(`%${location}%`)
+    }
+    if (job_type) {
+      const types = job_type.split(',')
+      const placeholders = types.map(() => '?').join(',')
+      conditions.push(`jobs.job_type IN (${placeholders})`)
+      params.push(...types)
+    }
+
+    const where = 'WHERE ' + conditions.join(' AND ')
+
     const [jobs] = await db.query(`
       SELECT 
         jobs.id,
@@ -33,9 +58,9 @@ export const getAllJobs = async (req, res) => {
         company_profiles.industry
       FROM jobs
       JOIN company_profiles ON jobs.company_id = company_profiles.id
-      WHERE jobs.status = 'open'
+      ${where}
       ORDER BY jobs.created_at DESC
-    `)
+    `, params)
 
     return res.json({
       status: 'success',
@@ -62,7 +87,8 @@ export const getJobById = async (req, res) => {
         company_profiles.industry,
         company_profiles.address AS company_address,
         company_profiles.description AS company_description,
-        company_profiles.website
+        company_profiles.website,
+        company_profiles.logo
       FROM jobs
       JOIN company_profiles ON jobs.company_id = company_profiles.id
       WHERE jobs.id = ?
