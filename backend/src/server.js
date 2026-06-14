@@ -53,5 +53,5 @@ app.use('/api/stats', statsRoutes)
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-    console.log(`Server berjalan di port ${PORT}`)
+    console.log(`aman bg, Server berjalan di port ${PORT}`)
 })

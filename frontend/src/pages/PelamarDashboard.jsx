@@ -4,6 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { api } from "../api/client";
 import { motion } from "motion/react";
 import GlareHover from "../components/GlareHover";
+import LogoutModal from "../components/LogoutModal";
 import {
   LayoutDashboard,
   Search,
@@ -64,6 +65,7 @@ function PelamarDashboard() {
   const [loading, setLoading] = useState(true);
   const [activeNav, setActiveNav] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [logoutOpen, setLogoutOpen] = useState(false);
 
   const canvasRef = useRef(null);
 
@@ -125,6 +127,10 @@ function PelamarDashboard() {
   }, []);
 
   const handleLogout = () => {
+    setLogoutOpen(true);
+  };
+
+  const confirmLogout = () => {
     logout();
     navigate("/login");
   };
@@ -510,6 +516,13 @@ function PelamarDashboard() {
           </section>
         </main>
       </motion.div>
+
+      <LogoutModal
+        open={logoutOpen}
+        onClose={() => setLogoutOpen(false)}
+        onConfirm={confirmLogout}
+        userName={user?.name}
+      />
     </div>
   );
 }
