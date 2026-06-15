@@ -47,8 +47,18 @@ export const getDashboardStats = async (_req, res) => {
   }
 };
 
-export const getDistributionStats = async (_req, res) => {
+export const getDistributionStats = async (req, res) => {
   try {
+    const period = req.query.period || "all";
+    let interval = "";
+    let periodClause = "";
+
+    if (period !== "all") {
+      const map = { "7d": "7 DAY", "30d": "30 DAY", "90d": "90 DAY", "1y": "365 DAY" };
+      interval = map[period] || "30 DAY";
+      periodClause = `AND created_at >= DATE_SUB(NOW(), INTERVAL ${interval})`;
+    }
+
     const [[{ total: totalAdmin }]] = await db.query(
       "SELECT COUNT(*) AS total FROM users WHERE role = 'admin'"
     );
@@ -60,19 +70,19 @@ export const getDistributionStats = async (_req, res) => {
     );
 
     const [appStatusRows] = await db.query(
-      "SELECT status, COUNT(*) AS total FROM applications GROUP BY status ORDER BY status"
+      `SELECT status, COUNT(*) AS total FROM applications WHERE 1=1 ${periodClause} GROUP BY status ORDER BY status`
     );
 
     const [verificationRows] = await db.query(
-      "SELECT verification_status, COUNT(*) AS total FROM company_profiles GROUP BY verification_status ORDER BY verification_status"
+      `SELECT verification_status, COUNT(*) AS total FROM company_profiles WHERE 1=1 ${periodClause} GROUP BY verification_status ORDER BY verification_status`
     );
 
     const [jobTypeRows] = await db.query(
-      "SELECT job_type, COUNT(*) AS total FROM jobs GROUP BY job_type ORDER BY job_type"
+      `SELECT job_type, COUNT(*) AS total FROM jobs WHERE 1=1 ${periodClause} GROUP BY job_type ORDER BY job_type`
     );
 
     const [categoryRows] = await db.query(
-      "SELECT category, COUNT(*) AS total FROM jobs GROUP BY category ORDER BY total DESC LIMIT 10"
+      `SELECT category, COUNT(*) AS total FROM jobs WHERE 1=1 ${periodClause} GROUP BY category ORDER BY total DESC LIMIT 10`
     );
 
     return res.json({
@@ -92,6 +102,36 @@ export const getDistributionStats = async (_req, res) => {
     return res.status(500).json({
       status: "error",
       message: "Gagal mengambil data distribusi",
+      error: error.message,
+    });
+  }
+};
+
+export const getFunnelData = async (_req, res) => {
+  try {
+    const [[{ totalApplicants }]] = await db.query(
+      "SELECT COUNT(DISTINCT applicant_id) AS total FROM applications"
+    );
+
+    const [[{ totalApplications }]] = await db.query(
+      "SELECT COUNT(*) AS total FROM applications"
+    );
+
+    const [statusRows] = await db.query(
+      `SELECT status, COUNT(*) AS total FROM applications GROUP BY status ORDER BY FIELD(status, 'menunggu', 'dilihat', 'interview', 'diterima', 'ditolak')`
+    );
+
+    const stages = [
+      { name: "Total Pelamar", value: totalApplicants },
+      { name: "Total Lamaran", value: totalApplications },
+      ...statusRows.map(r => ({ name: r.status, value: r.total })),
+    ];
+
+    return res.json({ status: "success", data: stages });
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      message: "Gagal mengambil data funnel",
       error: error.message,
     });
   }

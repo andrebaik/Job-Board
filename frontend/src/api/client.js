@@ -17,7 +17,7 @@ api.interceptors.request.use((config) => {
 export const adminApi = {
   getStats: () => api.get("/admin/stats"),
   getChartData: (period = "30d") => api.get(`/admin/stats/chart?period=${period}`),
-  getDistributionStats: () => api.get("/admin/stats/distribution"),
+  getDistributionStats: (period = "all") => api.get(`/admin/stats/distribution?period=${period}`),
   getUsers: (params = {}) => api.get("/admin/users", { params }),
   updateUser: (id, data) => api.patch(`/admin/users/${id}`, data),
   deleteUser: (id) => api.delete(`/admin/users/${id}`),

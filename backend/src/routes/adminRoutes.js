@@ -4,6 +4,7 @@ import {
   getDashboardStats,
   getChartData,
   getDistributionStats,
+  getFunnelData,
   getAllUsers,
   getAllJobs,
   getAllApplications,
@@ -22,6 +23,7 @@ router.use(authMiddleware, roleMiddleware("admin"));
 router.get("/stats", getDashboardStats);
 router.get("/stats/chart", getChartData);
 router.get("/stats/distribution", getDistributionStats);
+router.get("/stats/funnel", getFunnelData);
 
 router.get("/users", getAllUsers);
 router.patch("/users/:id", updateUser);

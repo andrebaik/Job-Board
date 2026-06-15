@@ -1,15 +1,19 @@
 import { useCallback, useState } from "react";
 import { motion } from "motion/react";
 import {
-  LineChart as RechartsLineChart,
-  Line,
+  AreaChart as RechartsAreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
 } from "recharts";
 
-function Chart({ data, lines, xKey = "date", height = 300 }) {
+function toGradientId(label) {
+  return `gradient-${label.replace(/\s+/g, "-").toLowerCase()}`;
+}
+
+function AreaChart({ data, lines, xKey = "date", height = 300 }) {
   const [tooltip, setTooltip] = useState({
     active: false,
     x: 0,
@@ -36,12 +40,20 @@ function Chart({ data, lines, xKey = "date", height = 300 }) {
   return (
     <div className="relative">
       <ResponsiveContainer width="100%" height={height}>
-        <RechartsLineChart
+        <RechartsAreaChart
           data={data}
           margin={{ top: 8, right: 12, left: -16, bottom: 0 }}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
+          <defs>
+            {lines.map((line) => (
+              <linearGradient key={line.key} id={toGradientId(line.key)} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={line.color} stopOpacity={0.3} />
+                <stop offset="95%" stopColor={line.color} stopOpacity={0} />
+              </linearGradient>
+            ))}
+          </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
           <XAxis
             dataKey={xKey}
@@ -56,17 +68,18 @@ function Chart({ data, lines, xKey = "date", height = 300 }) {
             allowDecimals={false}
           />
           {lines.map((line) => (
-            <Line
+            <Area
               key={line.key}
               type="monotone"
               dataKey={line.key}
               stroke={line.color}
               strokeWidth={2}
+              fill={`url(#${toGradientId(line.key)})`}
               dot={false}
               activeDot={{ r: 4, fill: line.color, strokeWidth: 0 }}
             />
           ))}
-        </RechartsLineChart>
+        </RechartsAreaChart>
       </ResponsiveContainer>
       <motion.div
         className="fixed pointer-events-none z-50 bg-zinc-900/90 border border-zinc-700 rounded-xl px-4 py-3 shadow-xl backdrop-blur-sm origin-top-left"
@@ -89,4 +102,4 @@ function Chart({ data, lines, xKey = "date", height = 300 }) {
   );
 }
 
-export default Chart;
+export default AreaChart;
