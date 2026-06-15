@@ -30,6 +30,7 @@ pnpm-debug.log*
 **/AGENTS.md
 **/SKILL.md
 .opencode/
+.agents/
 
 skills-lock.json
-.gitignore
+.blackboxcli/
