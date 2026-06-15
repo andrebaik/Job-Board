@@ -47,6 +47,56 @@ export const getDashboardStats = async (_req, res) => {
   }
 };
 
+export const getDistributionStats = async (_req, res) => {
+  try {
+    const [[{ total: totalAdmin }]] = await db.query(
+      "SELECT COUNT(*) AS total FROM users WHERE role = 'admin'"
+    );
+    const [[{ total: totalPelamar }]] = await db.query(
+      "SELECT COUNT(*) AS total FROM users WHERE role = 'pelamar'"
+    );
+    const [[{ total: totalPerusahaan }]] = await db.query(
+      "SELECT COUNT(*) AS total FROM users WHERE role = 'perusahaan'"
+    );
+
+    const [appStatusRows] = await db.query(
+      "SELECT status, COUNT(*) AS total FROM applications GROUP BY status ORDER BY status"
+    );
+
+    const [verificationRows] = await db.query(
+      "SELECT verification_status, COUNT(*) AS total FROM company_profiles GROUP BY verification_status ORDER BY verification_status"
+    );
+
+    const [jobTypeRows] = await db.query(
+      "SELECT job_type, COUNT(*) AS total FROM jobs GROUP BY job_type ORDER BY job_type"
+    );
+
+    const [categoryRows] = await db.query(
+      "SELECT category, COUNT(*) AS total FROM jobs GROUP BY category ORDER BY total DESC LIMIT 10"
+    );
+
+    return res.json({
+      status: "success",
+      data: {
+        userRoles: [
+          { label: "Pelamar", value: totalPelamar },
+          { label: "Perusahaan", value: totalPerusahaan },
+        ],
+        applicationStatus: appStatusRows.map(r => ({ label: r.status, value: r.total })),
+        companyVerification: verificationRows.map(r => ({ label: r.verification_status, value: r.total })),
+        jobTypes: jobTypeRows.map(r => ({ label: r.job_type, value: r.total })),
+        jobCategories: categoryRows.map(r => ({ label: r.category || "Lainnya", value: r.total })),
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      message: "Gagal mengambil data distribusi",
+      error: error.message,
+    });
+  }
+};
+
 export const getChartData = async (req, res) => {
   try {
     const period = req.query.period || "30d";

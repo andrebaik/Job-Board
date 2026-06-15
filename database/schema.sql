@@ -7,6 +7,7 @@ CREATE TABLE users (
   email VARCHAR(100) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
   role ENUM('admin', 'pelamar', 'perusahaan') NOT NULL,
+  is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -21,6 +22,8 @@ CREATE TABLE pelamar_profiles (
   skills TEXT,
   experience TEXT,
   cv_url VARCHAR(255),
+  profile_picture VARCHAR(255),
+  profile_completed BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -34,6 +37,8 @@ CREATE TABLE company_profiles (
   address TEXT,
   description TEXT,
   website VARCHAR(255),
+  logo VARCHAR(255),
+  profile_completed BOOLEAN DEFAULT FALSE,
   verification_status ENUM('pending', 'verified', 'rejected') DEFAULT 'pending',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

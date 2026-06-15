@@ -3,6 +3,7 @@ import { authMiddleware, roleMiddleware } from "../middleware/authMiddleware.js"
 import {
   getDashboardStats,
   getChartData,
+  getDistributionStats,
   getAllUsers,
   getAllJobs,
   getAllApplications,
@@ -20,6 +21,7 @@ router.use(authMiddleware, roleMiddleware("admin"));
 
 router.get("/stats", getDashboardStats);
 router.get("/stats/chart", getChartData);
+router.get("/stats/distribution", getDistributionStats);
 
 router.get("/users", getAllUsers);
 router.patch("/users/:id", updateUser);
