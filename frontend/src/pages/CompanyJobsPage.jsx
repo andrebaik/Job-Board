@@ -19,6 +19,7 @@ import {
   BarChart3,
   CheckCircle2,
   XCircle,
+  ShieldCheck,
   Dot,
 } from "lucide-react";
 
@@ -163,6 +164,9 @@ function CompanyJobsPage() {
               <h3 className="text-base font-semibold text-zinc-50 truncate">
                 {job.title}
               </h3>
+              {job.verification_status === "verified" && (
+                <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" title="Terverifikasi" />
+              )}
               <span
                 className={`shrink-0 px-2.5 py-0.5 rounded-full text-[11px] font-medium ${
                   job.status === "open"

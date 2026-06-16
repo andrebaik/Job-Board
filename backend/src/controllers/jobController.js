@@ -129,10 +129,11 @@ export const getCompanyJobs = async (req, res) => {
 
     const [jobs] = await db.query(
       `
-      SELECT *
+      SELECT jobs.*, company_profiles.verification_status
       FROM jobs
+      JOIN company_profiles ON jobs.company_id = company_profiles.id
       WHERE company_id = ?
-      ORDER BY created_at DESC
+      ORDER BY jobs.created_at DESC
       `,
       [companyId]
     )

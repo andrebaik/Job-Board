@@ -18,6 +18,8 @@ import {
   Send,
   CheckCircle,
   XCircle,
+  ShieldCheck,
+  ShieldX,
   Eye,
   ChevronLeft,
   User,
@@ -75,6 +77,7 @@ function CompanyDashboard() {
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [companyLogo, setCompanyLogo] = useState(null);
   const [companyName, setCompanyName] = useState("");
+  const [verificationStatus, setVerificationStatus] = useState("");
 
   const handleLogout = () => {
     setLogoutOpen(true);
@@ -91,6 +94,7 @@ function CompanyDashboard() {
       const data = res.data.data;
       if (data.logo) setCompanyLogo(IMG_BASE + data.logo);
       if (data.company_name) setCompanyName(data.company_name);
+      if (data.verification_status) setVerificationStatus(data.verification_status);
     } catch {
       // silent
     }
@@ -193,7 +197,18 @@ function CompanyDashboard() {
                 )}
               </div>
               <p className="text-zinc-50 text-sm font-medium mt-2 truncate">{companyName || user?.name}</p>
-              <span className="inline-block mt-1 text-[11px] font-medium text-zinc-300 bg-zinc-800 px-2 py-0.5 rounded-full">Perusahaan</span>
+              <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-medium text-zinc-300 bg-zinc-800 px-2 py-0.5 rounded-full">
+                Perusahaan
+                {verificationStatus === "verified" && (
+                  <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                )}
+                {verificationStatus === "rejected" && (
+                  <ShieldX className="w-3 h-3 text-red-400" />
+                )}
+                {verificationStatus === "pending" && (
+                  <Clock className="w-3 h-3 text-amber-400" />
+                )}
+              </span>
             </div>
           ) : (
             <div className="flex justify-center mb-6">
@@ -273,7 +288,28 @@ function CompanyDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.15 }}
           >
-            <h1 className="text-3xl font-bold text-zinc-50">Selamat datang, {companyName || user?.name}</h1>
+            <h1 className="text-3xl font-bold text-zinc-50">
+              Selamat datang, {companyName || user?.name}
+              {verificationStatus && (
+                <span
+                  className={`ml-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${
+                    verificationStatus === "verified"
+                      ? "bg-emerald-500/10 text-emerald-400"
+                      : verificationStatus === "rejected"
+                        ? "bg-red-500/10 text-red-400"
+                        : "bg-amber-500/10 text-amber-400"
+                  }`}
+                >
+                  {verificationStatus === "verified" ? (
+                    <><ShieldCheck className="w-4 h-4" /> Terverifikasi</>
+                  ) : verificationStatus === "rejected" ? (
+                    <><ShieldX className="w-4 h-4" /> Ditolak</>
+                  ) : (
+                    <><Clock className="w-4 h-4" /> Menunggu</>
+                  )}
+                </span>
+              )}
+            </h1>
             <p className="text-zinc-400 mt-1">Kelola lamaran masuk dan lowongan perusahaan Anda.</p>
             <div className="mt-5 flex flex-wrap gap-3">
               <GlareHover

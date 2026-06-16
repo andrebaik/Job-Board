@@ -85,6 +85,7 @@ function AdminDashboard() {
   const [companiesPage, setCompaniesPage] = useState(1);
   const [companiesPagination, setCompaniesPagination] = useState(null);
   const [companiesSearch, setCompaniesSearch] = useState("");
+  const [companiesVerificationFilter, setCompaniesVerificationFilter] = useState("");
 
   const loadStats = useCallback(async () => {
     try {
@@ -150,10 +151,12 @@ function AdminDashboard() {
     }
   }, []);
 
-  const loadCompanies = useCallback(async (page = 1, q = "") => {
+  const loadCompanies = useCallback(async (page = 1, q = "", verification_status = "") => {
     try {
       setCompaniesLoading(true);
-      const res = await adminApi.getCompanies({ page, limit: 10, q });
+      const params = { page, limit: 10, q };
+      if (verification_status) params.verification_status = verification_status;
+      const res = await adminApi.getCompanies(params);
       setCompanies(res.data.data);
       setCompaniesPagination(res.data.pagination);
     } catch {
@@ -176,7 +179,7 @@ function AdminDashboard() {
   useEffect(() => { if (activeNav === "applications") loadApplications(appsPage, appsSearch); }, [activeNav, appsPage, appsSearch, loadApplications]);
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { if (activeNav === "companies") loadCompanies(companiesPage, companiesSearch); }, [activeNav, companiesPage, companiesSearch, loadCompanies]);
+  useEffect(() => { if (activeNav === "companies") loadCompanies(companiesPage, companiesSearch, companiesVerificationFilter); }, [activeNav, companiesPage, companiesSearch, companiesVerificationFilter, loadCompanies]);
 
   const handleLogout = () => setLogoutOpen(true);
   const confirmLogout = () => {
@@ -262,7 +265,7 @@ function AdminDashboard() {
   const handleVerifyCompany = async (userId, status) => {
     try {
       await adminApi.verifyCompany(userId, status);
-      loadCompanies(companiesPage, companiesSearch);
+      loadCompanies(companiesPage, companiesSearch, companiesVerificationFilter);
     } catch {
       // silent
     }
@@ -723,6 +726,26 @@ function AdminDashboard() {
             >
               <h2 className="text-2xl font-bold text-zinc-50 mb-2">Perusahaan</h2>
               <p className="text-zinc-400 text-sm mb-6">Daftar perusahaan dan status verifikasi.</p>
+              <div className="flex gap-2 mb-4">
+                {[
+                  { label: "Semua", value: "" },
+                  { label: "Terverifikasi", value: "verified" },
+                  { label: "Pending", value: "pending" },
+                  { label: "Ditolak", value: "rejected" },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => { setCompaniesVerificationFilter(opt.value); setCompaniesPage(1); }}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                      companiesVerificationFilter === opt.value
+                        ? "bg-zinc-100 text-zinc-950"
+                        : "bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
               <DataTable
                 columns={companyColumns}
                 data={companies}
