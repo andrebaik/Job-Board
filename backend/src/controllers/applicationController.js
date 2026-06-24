@@ -56,7 +56,7 @@ export const applyJob = async (req, res) => {
       return res.status(400).json({
         status: 'error',
         message: 'Lowongan sudah ditutup'
-      })
+      }) 
     }
 
     const [existing] = await db.query(
