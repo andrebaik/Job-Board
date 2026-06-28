@@ -27,4 +27,15 @@ export const adminApi = {
   getApplications: (params = {}) => api.get("/admin/applications", { params }),
   getCompanies: (params = {}) => api.get("/admin/companies", { params }),
   verifyCompany: (id, verification_status) => api.patch(`/admin/companies/${id}/verify`, { verification_status }),
+  createBackup: () => api.post("/admin/backup"),
+  getBackups: () => api.get("/admin/backups"),
+  downloadBackup: (filename) => api.get(`/admin/backups/${encodeURIComponent(filename)}`, { responseType: "blob" }),
+  restoreBackup: (file) => {
+    const fd = new FormData();
+    fd.append("backup", file);
+    return api.post("/admin/restore", fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  deleteBackup: (filename) => api.delete(`/admin/backups/${encodeURIComponent(filename)}`),
 };

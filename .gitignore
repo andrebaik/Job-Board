@@ -31,6 +31,7 @@ pnpm-debug.log*
 **/SKILL.md
 .opencode/
 .agents/
+docs 
 
 skills-lock.json
 .blackboxcli/

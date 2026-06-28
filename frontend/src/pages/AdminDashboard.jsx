@@ -19,6 +19,10 @@ import {
   Shield,
   CheckCircle,
   Search,
+  Database,
+  Download,
+  Upload,
+  Trash2,
 } from "lucide-react";
 
 const statusConfig = {
@@ -41,6 +45,7 @@ const navItems = [
   { label: "Kelola Lowongan", icon: Briefcase, action: "jobs" },
   { label: "Kelola Lamaran", icon: FileText, action: "applications" },
   { label: "Perusahaan", icon: Building2, action: "companies" },
+  { label: "Backup & Restore", icon: Database, action: "backup" },
 ];
 
 function AdminDashboard() {
@@ -86,6 +91,12 @@ function AdminDashboard() {
   const [companiesPagination, setCompaniesPagination] = useState(null);
   const [companiesSearch, setCompaniesSearch] = useState("");
   const [companiesVerificationFilter, setCompaniesVerificationFilter] = useState("");
+
+  const [backups, setBackups] = useState([]);
+  const [backupsLoading, setBackupsLoading] = useState(false);
+  const [creatingBackup, setCreatingBackup] = useState(false);
+  const [restoringBackup, setRestoringBackup] = useState(false);
+  const [restoreFile, setRestoreFile] = useState(null);
 
   const loadStats = useCallback(async () => {
     try {
@@ -165,6 +176,98 @@ function AdminDashboard() {
       setCompaniesLoading(false);
     }
   }, []);
+
+  const loadBackups = useCallback(async () => {
+    try {
+      setBackupsLoading(true);
+      const res = await adminApi.getBackups();
+      setBackups(res.data.data);
+    } catch {
+      // silent
+    } finally {
+      setBackupsLoading(false);
+    }
+  }, []);
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { if (activeNav === "backup") loadBackups(); }, [activeNav, loadBackups]);
+
+  const handleCreateBackup = async () => {
+    try {
+      setCreatingBackup(true);
+      await adminApi.createBackup();
+      loadBackups();
+    } catch {
+      // silent
+    } finally {
+      setCreatingBackup(false);
+    }
+  };
+
+  const handleDownloadBackup = async (filename) => {
+    try {
+      const res = await adminApi.downloadBackup(filename);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      // silent
+    }
+  };
+
+  const handleDeleteBackup = (filename) => {
+    setConfirmData({
+      title: "Hapus Backup",
+      message: `Yakin ingin menghapus ${filename}?`,
+      variant: "danger",
+      confirmText: "Ya, Hapus",
+      onConfirm: async () => {
+        try {
+          await adminApi.deleteBackup(filename);
+          loadBackups();
+        } catch {
+          // silent
+        }
+        setConfirmOpen(false);
+      },
+    });
+    setConfirmOpen(true);
+  };
+
+  const handleRestoreBackup = () => {
+    if (!restoreFile) return;
+    setConfirmData({
+      title: "Restore Database",
+      message: "Backup otomatis akan dibuat sebelum restore. Semua data saat ini akan diganti dengan data dari file backup. Lanjutkan?",
+      variant: "danger",
+      confirmText: "Ya, Restore",
+      onConfirm: async () => {
+        try {
+          setRestoringBackup(true);
+          setConfirmOpen(false);
+          await adminApi.restoreBackup(restoreFile);
+          setRestoreFile(null);
+          loadBackups();
+        } catch {
+          // silent
+        } finally {
+          setRestoringBackup(false);
+        }
+      },
+    });
+    setConfirmOpen(true);
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  };
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadStats(); }, [loadStats]);
@@ -754,6 +857,127 @@ function AdminDashboard() {
                 onSearch={(q) => { setCompaniesSearch(q); setCompaniesPage(1); }}
                 onPageChange={setCompaniesPage}
               />
+            </motion.div>
+          )}
+
+          {activeNav === "backup" && (
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="space-y-8"
+            >
+              <div className="bg-zinc-900/70 border border-zinc-800 rounded-2xl p-8">
+                <h2 className="text-2xl font-bold text-zinc-50 mb-2">Backup Database</h2>
+                <p className="text-zinc-400 text-sm mb-6">
+                  Buat backup database untuk arsip atau sebelum melakukan operasi berbahaya.
+                </p>
+                <button
+                  onClick={handleCreateBackup}
+                  disabled={creatingBackup}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-violet-600 text-white hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+                >
+                  <Download className={`w-4 h-4 ${creatingBackup ? "animate-bounce" : ""}`} />
+                  {creatingBackup ? "Membuat Backup..." : "Buat Backup Baru"}
+                </button>
+              </div>
+
+              <div className="bg-zinc-900/70 border border-zinc-800 rounded-2xl p-8">
+                <h2 className="text-xl font-bold text-zinc-50 mb-1">Daftar Backup</h2>
+                <p className="text-zinc-400 text-sm mb-6">File backup yang tersedia.</p>
+
+                {backupsLoading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="h-12 bg-zinc-800/50 rounded-xl animate-pulse" />
+                    ))}
+                  </div>
+                ) : backups.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Database className="w-12 h-12 text-zinc-700 mx-auto mb-3" />
+                    <p className="text-zinc-500 text-sm">Belum ada backup</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-zinc-800">
+                          <th className="text-left text-zinc-500 font-medium pb-3 w-10">#</th>
+                          <th className="text-left text-zinc-500 font-medium pb-3">Nama File</th>
+                          <th className="text-left text-zinc-500 font-medium pb-3 w-24">Ukuran</th>
+                          <th className="text-left text-zinc-500 font-medium pb-3 w-40">Tanggal</th>
+                          <th className="text-right text-zinc-500 font-medium pb-3 w-32">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {backups.map((b, i) => (
+                          <tr key={b.filename} className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors">
+                            <td className="py-3 text-zinc-500">{i + 1}</td>
+                            <td className="py-3 text-zinc-200 font-mono text-xs">{b.filename}</td>
+                            <td className="py-3 text-zinc-400">{formatFileSize(b.size)}</td>
+                            <td className="py-3 text-zinc-400 text-xs">
+                              {new Date(b.created_at).toLocaleDateString("id-ID", {
+                                year: "numeric", month: "short", day: "numeric",
+                                hour: "2-digit", minute: "2-digit",
+                              })}
+                            </td>
+                            <td className="py-3 text-right">
+                              <div className="flex gap-1 justify-end">
+                                <button
+                                  onClick={() => handleDownloadBackup(b.filename)}
+                                  className="p-2 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-all cursor-pointer"
+                                  title="Download"
+                                >
+                                  <Download className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteBackup(b.filename)}
+                                  className="p-2 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all cursor-pointer"
+                                  title="Hapus"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-zinc-900/70 border border-zinc-800 rounded-2xl p-8">
+                <h2 className="text-xl font-bold text-zinc-50 mb-1">Restore Database</h2>
+                <p className="text-zinc-400 text-sm mb-6">
+                  Upload file backup (.sql) untuk mengembalikan database ke keadaan sebelumnya.
+                  Backup otomatis akan dibuat sebelum restore.
+                </p>
+
+                <div className="flex items-center gap-4">
+                  <label className="flex-1 flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-zinc-700 bg-zinc-800/30 hover:bg-zinc-800/50 transition-all cursor-pointer">
+                    <Upload className="w-5 h-5 text-zinc-400 shrink-0" />
+                    <span className={`text-sm ${restoreFile ? "text-zinc-200" : "text-zinc-500"}`}>
+                      {restoreFile ? restoreFile.name : "Pilih file .sql"}
+                    </span>
+                    <input
+                      type="file"
+                      accept=".sql"
+                      onChange={(e) => setRestoreFile(e.target.files[0] || null)}
+                      className="hidden"
+                    />
+                  </label>
+
+                  <button
+                    onClick={handleRestoreBackup}
+                    disabled={!restoreFile || restoringBackup}
+                    className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-medium bg-red-600 text-white hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer shrink-0"
+                  >
+                    <Upload className="w-4 h-4" />
+                    {restoringBackup ? "Merestore..." : "Restore"}
+                  </button>
+                </div>
+              </div>
             </motion.div>
           )}
         </main>

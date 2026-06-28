@@ -1,4 +1,75 @@
+import { spawn } from "child_process";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import db from "../config/db.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const BACKUP_DIR = path.join(__dirname, "../../backups");
+
+const getTimestamp = () => {
+  const now = new Date();
+  return now.getFullYear()
+    + "-" + String(now.getMonth() + 1).padStart(2, "0")
+    + "-" + String(now.getDate()).padStart(2, "0")
+    + "_" + String(now.getHours()).padStart(2, "0")
+    + String(now.getMinutes()).padStart(2, "0")
+    + String(now.getSeconds()).padStart(2, "0");
+};
+
+const getDbArgs = () => {
+  const args = ["-h", process.env.DB_HOST || "localhost", "-u", process.env.DB_USER || "root"];
+  if (process.env.DB_PORT) args.push("-P", process.env.DB_PORT);
+  return args;
+};
+
+const getMysqlEnv = () => {
+  const env = { ...process.env };
+  if (process.env.DB_PASSWORD) env.MYSQL_PWD = process.env.DB_PASSWORD;
+  return env;
+};
+
+const runMysqldump = (filepath) => {
+  return new Promise((resolve, reject) => {
+    const args = [...getDbArgs(), process.env.DB_NAME || "db_jobs"];
+    const dump = spawn("mysqldump", args, { env: getMysqlEnv() });
+    const writeStream = fs.createWriteStream(filepath);
+    let stderr = "";
+
+    dump.stdout.pipe(writeStream);
+    dump.stderr.on("data", (d) => { stderr += d.toString(); });
+
+    writeStream.on("error", reject);
+    dump.on("error", reject);
+
+    dump.on("close", (code) => {
+      writeStream.end();
+      if (code === 0) resolve();
+      else reject(new Error(stderr || `mysqldump exited with code ${code}`));
+    });
+  });
+};
+
+const runMysqlRestore = (filepath) => {
+  return new Promise((resolve, reject) => {
+    const args = [...getDbArgs(), process.env.DB_NAME || "db_jobs"];
+    const restore = spawn("mysql", args, { env: getMysqlEnv() });
+    const readStream = fs.createReadStream(filepath);
+    let stderr = "";
+
+    restore.stderr.on("data", (d) => { stderr += d.toString(); });
+
+    restore.on("error", reject);
+
+    restore.on("close", (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(stderr || `mysql exited with code ${code}`));
+    });
+
+    readStream.pipe(restore.stdin);
+    readStream.on("error", reject);
+  });
+};
 
 export const getDashboardStats = async (_req, res) => {
   try {
@@ -596,6 +667,176 @@ export const verifyCompany = async (req, res) => {
     return res.status(500).json({
       status: "error",
       message: "Gagal memperbarui status verifikasi",
+      error: error.message,
+    });
+  }
+};
+
+export const createBackup = async (_req, res) => {
+  try {
+    if (!fs.existsSync(BACKUP_DIR)) {
+      fs.mkdirSync(BACKUP_DIR, { recursive: true });
+    }
+
+    const filename = `db_jobs_${getTimestamp()}.sql`;
+    const filepath = path.join(BACKUP_DIR, filename);
+
+    await runMysqldump(filepath);
+
+    if (!fs.existsSync(filepath) || fs.statSync(filepath).size === 0) {
+      return res.status(500).json({
+        status: "error",
+        message: "Backup gagal — file hasil dump kosong",
+      });
+    }
+
+    const stat = fs.statSync(filepath);
+
+    return res.json({
+      status: "success",
+      data: {
+        filename,
+        size: stat.size,
+        created_at: stat.mtime,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      message: "Gagal membuat backup",
+      error: error.message,
+    });
+  }
+};
+
+export const listBackups = async (_req, res) => {
+  try {
+    if (!fs.existsSync(BACKUP_DIR)) {
+      return res.json({ status: "success", data: [] });
+    }
+
+    const files = fs.readdirSync(BACKUP_DIR)
+      .filter((f) => f.endsWith(".sql") && !f.startsWith("_"))
+      .map((f) => {
+        const stat = fs.statSync(path.join(BACKUP_DIR, f));
+        return {
+          filename: f,
+          size: stat.size,
+          created_at: stat.mtime,
+        };
+      })
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    return res.json({ status: "success", data: files });
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      message: "Gagal mengambil daftar backup",
+      error: error.message,
+    });
+  }
+};
+
+export const downloadBackup = async (req, res) => {
+  try {
+    const filename = path.basename(req.params.filename);
+
+    if (!filename.endsWith(".sql")) {
+      return res.status(400).json({
+        status: "error",
+        message: "Nama file tidak valid",
+      });
+    }
+
+    const filepath = path.join(BACKUP_DIR, filename);
+
+    if (!fs.existsSync(filepath)) {
+      return res.status(404).json({
+        status: "error",
+        message: "File backup tidak ditemukan",
+      });
+    }
+
+    return res.download(filepath, filename);
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      message: "Gagal mendownload backup",
+      error: error.message,
+    });
+  }
+};
+
+export const restoreBackup = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        status: "error",
+        message: "File backup harus diupload",
+      });
+    }
+
+    const filepath = req.file.path;
+
+    if (!fs.existsSync(BACKUP_DIR)) {
+      fs.mkdirSync(BACKUP_DIR, { recursive: true });
+    }
+
+    const autoFilename = `db_jobs_${getTimestamp()}.sql`;
+    const autoPath = path.join(BACKUP_DIR, autoFilename);
+
+    await runMysqldump(autoPath);
+    await runMysqlRestore(filepath);
+
+    try { fs.unlinkSync(filepath); } catch { /* ignore */ }
+
+    return res.json({
+      status: "success",
+      message: "Database berhasil direstore",
+      data: { auto_backup: autoFilename },
+    });
+  } catch (error) {
+    if (req.file && req.file.path) {
+      try { fs.unlinkSync(req.file.path); } catch { /* ignore */ }
+    }
+    return res.status(500).json({
+      status: "error",
+      message: "Gagal merestore database",
+      error: error.message,
+    });
+  }
+};
+
+export const deleteBackup = async (req, res) => {
+  try {
+    const filename = path.basename(req.params.filename);
+
+    if (!filename.endsWith(".sql")) {
+      return res.status(400).json({
+        status: "error",
+        message: "Nama file tidak valid",
+      });
+    }
+
+    const filepath = path.join(BACKUP_DIR, filename);
+
+    if (!fs.existsSync(filepath)) {
+      return res.status(404).json({
+        status: "error",
+        message: "File backup tidak ditemukan",
+      });
+    }
+
+    fs.unlinkSync(filepath);
+
+    return res.json({
+      status: "success",
+      message: "Backup berhasil dihapus",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      message: "Gagal menghapus backup",
       error: error.message,
     });
   }
