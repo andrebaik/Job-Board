@@ -1,11 +1,19 @@
-import { spawn } from "child_process";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { createConnection } from "mysql2/promise";
 import db from "../config/db.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BACKUP_DIR = path.join(__dirname, "../../backups");
+
+const TABLES = [
+  "users",
+  "pelamar_profiles",
+  "company_profiles",
+  "jobs",
+  "applications",
+];
 
 const getTimestamp = () => {
   const now = new Date();
@@ -17,58 +25,37 @@ const getTimestamp = () => {
     + String(now.getSeconds()).padStart(2, "0");
 };
 
-const getDbArgs = () => {
-  const args = ["-h", process.env.DB_HOST || "localhost", "-u", process.env.DB_USER || "root"];
-  if (process.env.DB_PORT) args.push("-P", process.env.DB_PORT);
-  return args;
+const esc = (value) => {
+  if (value === null || value === undefined) return "NULL";
+  if (typeof value === "number") return String(value);
+  return `'${String(value).replace(/'/g, "''")}'`;
 };
 
-const getMysqlEnv = () => {
-  const env = { ...process.env };
-  if (process.env.DB_PASSWORD) env.MYSQL_PWD = process.env.DB_PASSWORD;
-  return env;
-};
+const generateBackupSql = async () => {
+  const lines = [];
+  lines.push(`-- db_jobs backup - ${new Date().toISOString()}`);
+  lines.push("SET FOREIGN_KEY_CHECKS = 0;");
+  lines.push("");
 
-const runMysqldump = (filepath) => {
-  return new Promise((resolve, reject) => {
-    const args = [...getDbArgs(), process.env.DB_NAME || "db_jobs"];
-    const dump = spawn("mysqldump", args, { env: getMysqlEnv() });
-    const writeStream = fs.createWriteStream(filepath);
-    let stderr = "";
+  for (const table of TABLES) {
+    const [[createResult]] = await db.query(`SHOW CREATE TABLE \`${table}\``);
+    const createSql = createResult["Create Table"];
+    lines.push(`DROP TABLE IF EXISTS \`${table}\`;`);
+    lines.push(`${createSql};`);
+    lines.push("");
 
-    dump.stdout.pipe(writeStream);
-    dump.stderr.on("data", (d) => { stderr += d.toString(); });
+    const [rows] = await db.query(`SELECT * FROM \`${table}\``);
+    if (rows.length === 0) continue;
 
-    writeStream.on("error", reject);
-    dump.on("error", reject);
+    for (const row of rows) {
+      const values = Object.values(row).map(esc).join(", ");
+      lines.push(`INSERT INTO \`${table}\` VALUES (${values});`);
+    }
+    lines.push("");
+  }
 
-    dump.on("close", (code) => {
-      writeStream.end();
-      if (code === 0) resolve();
-      else reject(new Error(stderr || `mysqldump exited with code ${code}`));
-    });
-  });
-};
-
-const runMysqlRestore = (filepath) => {
-  return new Promise((resolve, reject) => {
-    const args = [...getDbArgs(), process.env.DB_NAME || "db_jobs"];
-    const restore = spawn("mysql", args, { env: getMysqlEnv() });
-    const readStream = fs.createReadStream(filepath);
-    let stderr = "";
-
-    restore.stderr.on("data", (d) => { stderr += d.toString(); });
-
-    restore.on("error", reject);
-
-    restore.on("close", (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(stderr || `mysql exited with code ${code}`));
-    });
-
-    readStream.pipe(restore.stdin);
-    readStream.on("error", reject);
-  });
+  lines.push("SET FOREIGN_KEY_CHECKS = 1;");
+  return lines.join("\n");
 };
 
 export const getDashboardStats = async (_req, res) => {
@@ -681,14 +668,8 @@ export const createBackup = async (_req, res) => {
     const filename = `db_jobs_${getTimestamp()}.sql`;
     const filepath = path.join(BACKUP_DIR, filename);
 
-    await runMysqldump(filepath);
-
-    if (!fs.existsSync(filepath) || fs.statSync(filepath).size === 0) {
-      return res.status(500).json({
-        status: "error",
-        message: "Backup gagal — file hasil dump kosong",
-      });
-    }
+    const sql = await generateBackupSql();
+    fs.writeFileSync(filepath, sql, "utf-8");
 
     const stat = fs.statSync(filepath);
 
@@ -784,9 +765,22 @@ export const restoreBackup = async (req, res) => {
 
     const autoFilename = `db_jobs_${getTimestamp()}.sql`;
     const autoPath = path.join(BACKUP_DIR, autoFilename);
+    const autoSql = await generateBackupSql();
+    fs.writeFileSync(autoPath, autoSql, "utf-8");
 
-    await runMysqldump(autoPath);
-    await runMysqlRestore(filepath);
+    const sql = fs.readFileSync(filepath, "utf-8");
+
+    const conn = await createConnection({
+      host: process.env.DB_HOST || "localhost",
+      user: process.env.DB_USER || "root",
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME || "db_jobs",
+      port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : undefined,
+      multipleStatements: true,
+    });
+
+    await conn.query(sql);
+    await conn.end();
 
     try { fs.unlinkSync(filepath); } catch { /* ignore */ }
 
