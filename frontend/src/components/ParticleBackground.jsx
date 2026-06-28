@@ -26,11 +26,17 @@ function ParticleBackground({ className = "fixed inset-0 z-0", opacity = 0.5 }) 
 
     const init = () => {
       ps = [];
-      const count = Math.floor((canvas.width * canvas.height) / 9000);
+      const count = Math.min(
+        Math.floor((canvas.width * canvas.height) / 12000),
+        300
+      );
       for (let i = 0; i < count; i++) ps.push(make());
     };
 
+    let running = true;
+
     const draw = () => {
+      if (!running) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ps.forEach((p) => {
         p.y -= p.v;
@@ -51,11 +57,24 @@ function ParticleBackground({ className = "fixed inset-0 z-0", opacity = 0.5 }) 
       init();
     };
 
+    const onVisibility = () => {
+      if (document.hidden) {
+        running = false;
+        cancelAnimationFrame(raf);
+      } else {
+        running = true;
+        raf = requestAnimationFrame(draw);
+      }
+    };
+
     window.addEventListener("resize", onResize);
+    document.addEventListener("visibilitychange", onVisibility);
     init();
     raf = requestAnimationFrame(draw);
     return () => {
+      running = false;
       window.removeEventListener("resize", onResize);
+      document.removeEventListener("visibilitychange", onVisibility);
       cancelAnimationFrame(raf);
     };
   }, []);

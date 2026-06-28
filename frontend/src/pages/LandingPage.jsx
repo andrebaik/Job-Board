@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Beams from "../components/Beams";
 import TrueFocus from "../components/TrueFocus";
 import StarBorder from "../components/StarBorder";
@@ -16,6 +16,21 @@ function LandingPage() {
     filledJobs: 0,
   });
   const [statsLoading, setStatsLoading] = useState(true);
+  const heroRef = useRef(null);
+  const [heroVisible, setHeroVisible] = useState(true);
+
+  useEffect(() => {
+    const el = heroRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => setHeroVisible(entry.isIntersecting),
+      { threshold: 0 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
   const formatNumber = (value) =>
     `${new Intl.NumberFormat("id-ID").format(value || 0)}`;
@@ -82,18 +97,20 @@ function LandingPage() {
       `}</style>
 
       {/* ─── Beams background ─── */}
-      <div className="absolute inset-0 pointer-events-none">
-        <Beams
-          beamWidth={1.2}
-          beamHeight={18}
-          beamNumber={20}
-          lightColor="#ffffff"
-          speed={1.5}
-          noiseIntensity={6.5}
-          scale={0.20}
-          rotation={30}
-        />
-      </div>
+      {heroVisible && (
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <Beams
+            beamWidth={1.2}
+            beamHeight={18}
+            beamNumber={isMobile ? 8 : 20}
+            lightColor="#ffffff"
+            speed={1.5}
+            noiseIntensity={6.5}
+            scale={0.20}
+            rotation={30}
+          />
+        </div>
+      )}
 
       {/* ─── Dark overlay ─── */}
       <div className="absolute inset-0 bg-zinc-950/70 pointer-events-none" />
@@ -166,7 +183,7 @@ function LandingPage() {
         </header>
 
         {/* ─────── Hero ─────── */}
-        <section className="min-h-screen flex items-center justify-center px-4 pt-32 pb-16">
+        <section ref={heroRef} className="min-h-screen flex items-center justify-center px-4 pt-32 pb-16">
           <div className="max-w-[800px] mx-auto text-center">
             {/* Headline */}
             <div className="hero-focus leading-[1.1] tracking-tight">
@@ -199,6 +216,12 @@ function LandingPage() {
                 className="w-full sm:w-auto px-8 py-3 bg-zinc-900/70 text-zinc-300 text-sm font-medium rounded-xl hover:bg-zinc-800 transition-all border border-zinc-700 text-center"
               >
                 Lihat Lowongan
+              </Link>
+              <Link
+                to="/slides"
+                className="w-full sm:w-auto px-8 py-3 bg-zinc-900/70 text-zinc-300 text-sm font-medium rounded-xl hover:bg-zinc-800 transition-all border border-zinc-700 text-center"
+              >
+                Presentasi
               </Link>
             </div>
 
@@ -278,6 +301,7 @@ function LandingPage() {
           </p>
         </div>
       </section>
+
     </div>
   );
 }
